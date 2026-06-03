@@ -99,6 +99,8 @@ export default function MatchCard({ match, prediction: initialPred, allPreds, us
 
         {/* My prediction inputs */}
         <div className="flex items-center gap-2">
+          {/* Spacer igual al ancho del botón para centrar los inputs */}
+          <div className="w-16 shrink-0" />
           <div className="flex-1">
             <input
               type="number" min="0" max="99" value={home}
@@ -108,7 +110,7 @@ export default function MatchCard({ match, prediction: initialPred, allPreds, us
               className="w-full bg-gray-800 border border-gray-700 rounded-xl py-2 text-center text-xl font-bold text-white focus:outline-none focus:border-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition"
             />
           </div>
-          <span className="text-gray-600 font-bold">-</span>
+          <span className="text-gray-600 font-bold shrink-0">-</span>
           <div className="flex-1">
             <input
               type="number" min="0" max="99" value={away}
@@ -118,20 +120,19 @@ export default function MatchCard({ match, prediction: initialPred, allPreds, us
               className="w-full bg-gray-800 border border-gray-700 rounded-xl py-2 text-center text-xl font-bold text-white focus:outline-none focus:border-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition"
             />
           </div>
-
           {!locked ? (
             <button
               onClick={handleSave}
               disabled={home === '' || away === '' || isPending}
-              className={`px-4 py-2 rounded-xl text-sm font-semibold transition ${
+              className={`w-16 shrink-0 py-2 rounded-xl text-sm font-semibold transition ${
                 saved ? 'bg-emerald-600 text-white' : 'bg-gray-700 hover:bg-gray-600 text-white disabled:opacity-40'
               }`}
             >
               {saved ? '✓' : isPending ? '...' : 'Guardar'}
             </button>
           ) : (
-            <div className="px-3 py-2 text-xs text-gray-600">
-              {hasResult ? '—' : 'Cerrado'}
+            <div className="w-16 shrink-0 text-center text-xs text-gray-600">
+              {hasResult ? '' : 'Cerrado'}
             </div>
           )}
         </div>
