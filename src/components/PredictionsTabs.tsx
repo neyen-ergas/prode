@@ -22,6 +22,7 @@ export default function PredictionsTabs({ grouped, predMap: initialPredMap, allP
 
   function isPending(match: Match): boolean {
     if (isMatchLocked(match.match_date, match.status)) return false
+    if (match.home_team === 'TBD' || match.away_team === 'TBD') return false
     return !savedPreds[match.id] && !initialPredMap[match.id]
   }
 

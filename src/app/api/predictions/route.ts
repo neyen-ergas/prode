@@ -31,11 +31,15 @@ export async function POST(req: NextRequest) {
   // Check match hasn't started
   const { data: match } = await supabase
     .from('matches')
-    .select('match_date, status')
+    .select('match_date, status, home_team, away_team')
     .eq('id', matchId)
     .single()
 
   if (!match) return NextResponse.json({ error: 'Partido no encontrado' }, { status: 404 })
+
+  if (match.home_team === 'TBD' || match.away_team === 'TBD') {
+    return NextResponse.json({ error: 'Los equipos aún no están definidos' }, { status: 400 })
+  }
 
   const locked = match.status === 'FINISHED' || new Date(match.match_date) <= new Date()
   if (locked) {
