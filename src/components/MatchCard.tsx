@@ -139,14 +139,12 @@ export default function MatchCard({ match, prediction: initialPred, allPreds, us
         {error && <p className="text-red-400 text-xs text-center">{error}</p>}
 
         {/* Toggle ver pronósticos */}
-        {(locked || predCount > 0) && (
-          <button
-            onClick={() => setShowAll(!showAll)}
-            className="w-full text-xs text-gray-500 hover:text-gray-300 transition flex items-center justify-center gap-1 pt-1"
-          >
-            {showAll ? '▲ Ocultar' : `▼ Ver pronósticos (${predCount}/${users.length})`}
-          </button>
-        )}
+        <button
+          onClick={() => setShowAll(!showAll)}
+          className="w-full text-xs text-gray-500 hover:text-gray-300 transition flex items-center justify-center gap-1 pt-1"
+        >
+          {showAll ? '▲ Ocultar' : `▼ Ver pronósticos (${predCount}/${users.length})`}
+        </button>
       </div>
 
       {/* All predictions expanded */}
