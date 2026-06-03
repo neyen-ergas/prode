@@ -2,9 +2,13 @@ import type { Match, MatchStatus, Stage } from './types'
 
 const ESPN_BASE = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world'
 
+// World Cup 2026: June 11 – July 19
+const WC_DATE_RANGE = '20260611-20260719'
+
 function mapStatus(s: string): MatchStatus {
   const map: Record<string, MatchStatus> = {
     STATUS_SCHEDULED: 'SCHEDULED',
+    STATUS_TIMED: 'SCHEDULED',
     STATUS_IN_PROGRESS: 'IN_PLAY',
     STATUS_HALFTIME: 'PAUSED',
     STATUS_FINAL: 'FINISHED',
@@ -15,25 +19,26 @@ function mapStatus(s: string): MatchStatus {
   return map[s] ?? 'SCHEDULED'
 }
 
-function mapStage(groupName: string | null, notes: string): Stage {
-  const text = (notes + ' ' + (groupName ?? '')).toUpperCase()
+function mapStage(notes: string, round: string): Stage {
+  const text = (notes + ' ' + round).toUpperCase()
   if (text.includes('FINAL') && !text.includes('SEMI') && !text.includes('QUARTER') && !text.includes('THIRD')) return 'FINAL'
   if (text.includes('THIRD')) return 'THIRD_PLACE'
   if (text.includes('SEMI')) return 'SEMI_FINALS'
   if (text.includes('QUARTER')) return 'QUARTER_FINALS'
-  if (text.includes('ROUND OF 16') || text.includes('LAST 16') || text.includes('ROUND OF SIXTEEN')) return 'LAST_16'
+  if (text.includes('ROUND OF 16') || text.includes('LAST 16') || text.includes('ROUND OF SIXTEEN') || text.includes('OCTAVOS')) return 'LAST_16'
   return 'GROUP_STAGE'
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapEvent(event: any): Match {
-  const competition = event.competitions?.[0]
-  const home = competition?.competitors?.find((c: any) => c.homeAway === 'home')
-  const away = competition?.competitors?.find((c: any) => c.homeAway === 'away')
-  const status = competition?.status?.type?.name ?? 'STATUS_SCHEDULED'
-  const isFinished = status === 'STATUS_FINAL' || status === 'STATUS_FULL_TIME'
-  const notes = event.notes?.[0]?.headline ?? ''
-  const groupName = event.season?.slug ?? null
+  const comp = event.competitions?.[0]
+  const home = comp?.competitors?.find((c: any) => c.homeAway === 'home')
+  const away = comp?.competitors?.find((c: any) => c.homeAway === 'away')
+  const statusName: string = comp?.status?.type?.name ?? 'STATUS_SCHEDULED'
+  const isFinished = statusName === 'STATUS_FINAL' || statusName === 'STATUS_FULL_TIME'
+  const notes: string = event.notes?.[0]?.headline ?? ''
+  const round: string = comp?.series?.summary ?? event.season?.type?.name ?? ''
+  const groupName: string | null = notes.includes('Group') || notes.includes('Grupo') ? notes : null
 
   return {
     id: String(event.id),
@@ -44,54 +49,19 @@ function mapEvent(event: any): Match {
     home_score: isFinished && home?.score !== undefined ? parseInt(home.score) : null,
     away_score: isFinished && away?.score !== undefined ? parseInt(away.score) : null,
     match_date: event.date,
-    status: mapStatus(status),
-    stage: mapStage(groupName, notes),
-    group_name: notes.includes('Group') ? notes : null,
+    status: mapStatus(statusName),
+    stage: mapStage(notes, round),
+    group_name: groupName,
     matchday: event.week?.number ?? null,
   }
 }
 
 export async function fetchMatches(): Promise<Match[]> {
-  // ESPN paginates by week; fetch all events via calendar endpoint first
-  const calRes = await fetch(`${ESPN_BASE}/calendar/whitelist`, {
-    next: { revalidate: 3600 },
-  })
-
-  let dates: string[] = []
-  if (calRes.ok) {
-    const cal = await calRes.json()
-    dates = (cal.eventDate?.dates ?? []) as string[]
-  }
-
-  if (dates.length === 0) {
-    // Fallback: fetch current scoreboard only
-    return fetchScoreboard()
-  }
-
-  const allMatches: Match[] = []
-  // Fetch in batches to avoid rate limiting
-  for (let i = 0; i < dates.length; i += 5) {
-    const batch = dates.slice(i, i + 5)
-    const results = await Promise.all(batch.map((d) => fetchScoreboard(d)))
-    allMatches.push(...results.flat())
-  }
-
-  // Deduplicate by id
-  const seen = new Set<string>()
-  return allMatches.filter((m) => {
-    if (seen.has(m.id)) return false
-    seen.add(m.id)
-    return true
-  })
-}
-
-async function fetchScoreboard(date?: string): Promise<Match[]> {
-  const url = date
-    ? `${ESPN_BASE}/scoreboard?dates=${date.replace(/-/g, '')}&limit=50`
-    : `${ESPN_BASE}/scoreboard?limit=50`
-
-  const res = await fetch(url, { next: { revalidate: 60 } })
-  if (!res.ok) return []
+  const res = await fetch(
+    `${ESPN_BASE}/scoreboard?limit=200&dates=${WC_DATE_RANGE}`,
+    { next: { revalidate: 60 } }
+  )
+  if (!res.ok) throw new Error(`ESPN API error: ${res.status}`)
   const data = await res.json()
   return (data.events ?? []).map(mapEvent)
 }
