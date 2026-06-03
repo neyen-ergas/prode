@@ -21,7 +21,7 @@ export default function PredictionsTabs({ grouped, predMap: initialPredMap, allP
   const [savedPreds, setSavedPreds] = useState<Record<string, { home: number; away: number }>>({})
 
   function isPlaceholder(team: string): boolean {
-    return /winner|loser|round of|quarterfinal|semifinal|tbd/i.test(team)
+    return /winner|loser|round of|quarterfinal|semifinal|tbd|place|group [a-z]/i.test(team)
   }
 
   function isPending(match: Match): boolean {
