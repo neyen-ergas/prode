@@ -21,7 +21,6 @@ export default function AppShell({ user, children }: Props) {
   const navItems = [
     { href: '/predictions', label: 'Predicciones', icon: '⚽' },
     { href: '/ranking', label: 'Ranking', icon: '🏆' },
-    { href: '/champion', label: 'Campeón', icon: '🌟' },
   ]
 
   return (

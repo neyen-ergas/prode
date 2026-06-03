@@ -1,85 +1,45 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { getSession } from '@/lib/auth'
-import type { RankingEntry, User } from '@/lib/types'
+import type { User } from '@/lib/types'
 import { POINTS } from '@/lib/scoring'
 
 export const dynamic = 'force-dynamic'
 
-async function getRanking(): Promise<{ ranking: RankingEntry[]; hasStarted: boolean }> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL ? '' : 'http://localhost:3000'}/api/ranking`, {
-    cache: 'no-store',
-  })
-  if (!res.ok) return { ranking: [], hasStarted: false }
-  return res.json()
+type PredRow = { user_id: string; points: number | null }
+
+interface RankingEntry {
+  user: User
+  total_points: number
+  exact_scores: number
+  correct_results: number
+  predictions_count: number
 }
 
 export default async function RankingPage() {
   const session = await getSession()
   const supabase = createAdminClient()
 
-  const [rankingRes, { data: users }] = await Promise.all([
-    (async () => {
-      const supabaseAdmin = createAdminClient()
-      const [{ data: allUsers }, { data: predictions }, { data: champions }] = await Promise.all([
-        supabaseAdmin.from('users').select('id, name, color, created_at').order('name'),
-        supabaseAdmin.from('predictions').select('user_id, points'),
-        supabaseAdmin.from('champion_predictions').select('user_id, team'),
-      ])
-
-      const { data: finalMatch } = await supabaseAdmin
-        .from('matches')
-        .select('home_team, away_team, home_score, away_score')
-        .eq('stage', 'FINAL')
-        .eq('status', 'FINISHED')
-        .maybeSingle()
-
-      const { data: anyFinished } = await supabaseAdmin
-        .from('matches')
-        .select('id')
-        .eq('status', 'FINISHED')
-        .limit(1)
-
-      let actualChampion: string | null = null
-      if (finalMatch?.home_score !== null && finalMatch?.away_score !== null) {
-        actualChampion =
-          (finalMatch?.home_score ?? 0) > (finalMatch?.away_score ?? 0)
-            ? finalMatch?.home_team ?? null
-            : finalMatch?.away_team ?? null
-      }
-
-      const ranking: RankingEntry[] = (allUsers ?? [] as User[]).map((user: User) => {
-        const userPreds = (predictions ?? []).filter((p: { user_id: string; points: number | null }) => p.user_id === user.id)
-        type PredRow = { user_id: string; points: number | null }
-        const matchPoints = userPreds.reduce((s: number, p: PredRow) => s + (p.points ?? 0), 0)
-        const exactScores = userPreds.filter((p: PredRow) => p.points === POINTS.EXACT_SCORE).length
-        const correctResults = userPreds.filter((p: PredRow) => p.points === POINTS.CORRECT_RESULT).length
-        const championPred = (champions ?? []).find((c: { user_id: string; team: string }) => c.user_id === user.id)
-        const championPoints =
-          actualChampion && championPred?.team === actualChampion ? POINTS.CHAMPION : 0
-
-        return {
-          user,
-          total_points: matchPoints + championPoints,
-          exact_scores: exactScores,
-          correct_results: correctResults,
-          predictions_count: userPreds.length,
-          champion_team: championPred?.team ?? null,
-          champion_points: championPoints,
-        }
-      })
-
-      ranking.sort((a, b) => {
-        if (b.total_points !== a.total_points) return b.total_points - a.total_points
-        if (b.exact_scores !== a.exact_scores) return b.exact_scores - a.exact_scores
-        return a.user.name.localeCompare(b.user.name)
-      })
-
-      return { ranking, hasStarted: (anyFinished?.length ?? 0) > 0 }
-    })(),
-    supabase.from('users').select('id').eq('id', session!.userId),
+  const [{ data: allUsers }, { data: predictions }, { data: anyFinished }] = await Promise.all([
+    supabase.from('users').select('id, name, color, created_at').order('name'),
+    supabase.from('predictions').select('user_id, points'),
+    supabase.from('matches').select('id').eq('status', 'FINISHED').limit(1),
   ])
 
-  const { ranking, hasStarted } = rankingRes
+  const ranking: RankingEntry[] = (allUsers ?? [] as User[]).map((user: User) => {
+    const userPreds = (predictions ?? [] as PredRow[]).filter((p: PredRow) => p.user_id === user.id)
+    const total_points = userPreds.reduce((s: number, p: PredRow) => s + (p.points ?? 0), 0)
+    const exact_scores = userPreds.filter((p: PredRow) => p.points === POINTS.EXACT_SCORE).length
+    const correct_results = userPreds.filter((p: PredRow) => p.points === POINTS.CORRECT_RESULT).length
+    return { user, total_points, exact_scores, correct_results, predictions_count: userPreds.length }
+  })
+
+  ranking.sort((a, b) => {
+    if (b.total_points !== a.total_points) return b.total_points - a.total_points
+    if (b.exact_scores !== a.exact_scores) return b.exact_scores - a.exact_scores
+    return a.user.name.localeCompare(b.user.name)
+  })
+
+  const hasStarted = (anyFinished?.length ?? 0) > 0
   const medals = ['🥇', '🥈', '🥉']
 
   return (
@@ -88,7 +48,7 @@ export default async function RankingPage() {
         <h1 className="text-xl font-bold text-white">Ranking</h1>
         {!hasStarted && (
           <span className="text-xs text-gray-500 bg-gray-800 px-2 py-1 rounded-full">
-            El torneo no inició
+            Torneo no iniciado
           </span>
         )}
       </div>
@@ -103,8 +63,8 @@ export default async function RankingPage() {
                 isMe ? 'bg-emerald-500/10 border border-emerald-500/30' : 'bg-gray-900'
               }`}
             >
-              <div className="w-8 text-center text-xl font-bold">
-                {medals[i] ?? <span className="text-gray-500 text-base">{i + 1}</span>}
+              <div className="w-7 text-center text-xl shrink-0">
+                {i < 3 ? medals[i] : <span className="text-gray-500 text-sm font-bold">{i + 1}</span>}
               </div>
 
               <div
@@ -123,9 +83,6 @@ export default async function RankingPage() {
                   <span>{entry.predictions_count} pred.</span>
                   <span>✓✓ {entry.exact_scores}</span>
                   <span>✓ {entry.correct_results}</span>
-                  {entry.champion_team && (
-                    <span className="text-yellow-500">🌟 {entry.champion_team}</span>
-                  )}
                 </div>
               </div>
 
@@ -138,16 +95,9 @@ export default async function RankingPage() {
         })}
       </div>
 
-      {ranking.length === 0 && (
-        <div className="text-center text-gray-500 py-12 text-sm">
-          Aún no hay usuarios registrados.
-        </div>
-      )}
-
-      <div className="text-xs text-gray-600 text-center pt-2 space-y-0.5">
-        <p>Marcador exacto = {POINTS.EXACT_SCORE} pts · Resultado correcto = {POINTS.CORRECT_RESULT} pt</p>
-        <p>Campeón correcto = {POINTS.CHAMPION} pts</p>
-      </div>
+      <p className="text-xs text-gray-600 text-center pt-2">
+        Exacto = {POINTS.EXACT_SCORE} pts · Resultado = {POINTS.CORRECT_RESULT} pt
+      </p>
     </div>
   )
 }
