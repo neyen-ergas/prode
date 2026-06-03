@@ -10,7 +10,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const supabase = createAdminClient()
   const { data: user } = await supabase
     .from('users')
-    .select('id, name, color, created_at')
+    .select('id, name, color, emoji, created_at')
     .eq('id', session.userId)
     .single()
 

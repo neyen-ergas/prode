@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import type { Match, User } from '@/lib/types'
 import { POINTS } from '@/lib/scoring'
+import Avatar from './Avatar'
 import { formatMatchDate } from '@/lib/utils'
 
 type PredRow = { home_score: number; away_score: number; points: number | null }
@@ -56,12 +57,7 @@ export default function RankingList({ ranking, currentUserId, userPredMap, match
                 {i < 3 ? medals[i] : <span className="text-gray-500 text-sm font-bold">{i + 1}</span>}
               </div>
 
-              <div
-                className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0"
-                style={{ backgroundColor: entry.user.color }}
-              >
-                {entry.user.name[0].toUpperCase()}
-              </div>
+              <Avatar name={entry.user.name} color={entry.user.color} emoji={entry.user.emoji} size="lg" />
 
               <div className="flex-1 min-w-0">
                 <div className="font-semibold text-white text-sm flex items-center gap-1">

@@ -12,6 +12,7 @@ export interface User {
   id: string
   name: string
   color: string
+  emoji: string | null
   created_at: string
 }
 

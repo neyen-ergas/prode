@@ -28,7 +28,7 @@ export default async function PredictionsPage() {
       supabase.from('matches').select('*').order('match_date', { ascending: true }),
       supabase.from('predictions').select('*').eq('user_id', session!.userId),
       supabase.from('predictions').select('user_id, match_id, home_score, away_score, points'),
-      supabase.from('users').select('id, name, color').order('name'),
+      supabase.from('users').select('id, name, color, emoji').order('name'),
     ])
 
   if (!matches?.length) {

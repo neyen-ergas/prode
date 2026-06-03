@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import type { Match, Prediction, User } from '@/lib/types'
 import { formatMatchDate, isMatchLocked } from '@/lib/utils'
+import Avatar from './Avatar'
 import { POINTS } from '@/lib/scoring'
 
 type PredEntry = { home_score: number; away_score: number; points: number | null }
@@ -161,12 +162,7 @@ export default function MatchCard({ match, prediction: initialPred, allPreds, us
                 key={u.id}
                 className={`flex items-center gap-3 px-4 py-2.5 ${isMe ? 'bg-emerald-500/5' : ''}`}
               >
-                <div
-                  className="w-6 h-6 rounded-full flex items-center justify-center text-white font-bold text-xs shrink-0"
-                  style={{ backgroundColor: u.color }}
-                >
-                  {u.name[0].toUpperCase()}
-                </div>
+                <Avatar name={u.name} color={u.color} emoji={u.emoji} size="sm" />
                 <span className={`text-sm flex-1 ${isMe ? 'text-white font-medium' : 'text-gray-300'}`}>
                   {u.name}
                 </span>

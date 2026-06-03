@@ -14,7 +14,7 @@ export default async function RankingPage() {
 
   const [{ data: allUsers }, { data: predictions }, { data: matches }, { data: anyFinished }] =
     await Promise.all([
-      supabase.from('users').select('id, name, color, created_at').order('name'),
+      supabase.from('users').select('id, name, color, emoji, created_at').order('name'),
       supabase.from('predictions').select('user_id, match_id, home_score, away_score, points'),
       supabase.from('matches').select('*').order('match_date', { ascending: true }),
       supabase.from('matches').select('id').eq('status', 'FINISHED').limit(1),
