@@ -3,8 +3,11 @@
 import { useState } from 'react'
 import MatchCard from './MatchCard'
 import type { Match, Prediction, User } from '@/lib/types'
+import { isMatchLocked } from '@/lib/utils'
 
 type PredEntry = { home_score: number; away_score: number; points: number | null }
+
+const PENDING_TAB = '__pending__'
 
 interface Props {
   grouped: { date: string; label: string; matches: Match[] }[]
@@ -15,17 +18,22 @@ interface Props {
 }
 
 export default function PredictionsTabs({ grouped, predMap: initialPredMap, allPredMap, users, currentUserId }: Props) {
+  const [savedPreds, setSavedPreds] = useState<Record<string, { home: number; away: number }>>({})
+
+  function isPending(match: Match): boolean {
+    if (isMatchLocked(match.match_date, match.status)) return false
+    return !savedPreds[match.id] && !initialPredMap[match.id]
+  }
+
+  const pendingMatches = grouped.flatMap((g) => g.matches).filter(isPending)
+
   const initialTab = () => {
+    if (pendingMatches.length > 0) return PENDING_TAB
     const now = new Date()
-    const upcoming = grouped.find((g) => g.matches.some((m) => new Date(m.match_date) >= now))
-    return upcoming?.date ?? grouped[0]?.date ?? ''
+    return grouped.find((g) => g.matches.some((m) => new Date(m.match_date) >= now))?.date ?? grouped[0]?.date ?? ''
   }
 
   const [active, setActive] = useState<string>(initialTab)
-  // Mantiene las predicciones guardadas en esta sesión para que persistan al cambiar de tab
-  const [savedPreds, setSavedPreds] = useState<Record<string, { home: number; away: number }>>({})
-
-  const current = grouped.find((g) => g.date === active)
 
   function handleSaved(matchId: string, home: number, away: number) {
     setSavedPreds((prev) => ({ ...prev, [matchId]: { home, away } }))
@@ -44,27 +52,58 @@ export default function PredictionsTabs({ grouped, predMap: initialPredMap, allP
     return initialPredMap[matchId] ?? null
   }
 
+  const currentMatches =
+    active === PENDING_TAB
+      ? pendingMatches
+      : grouped.find((g) => g.date === active)?.matches ?? []
+
   return (
     <div className="flex flex-col h-full">
+      {/* Tabs */}
       <div className="flex gap-2 overflow-x-auto px-4 py-3 scrollbar-none border-b border-gray-800 shrink-0">
+
+        {/* Tab pendientes */}
+        {pendingMatches.length > 0 && (
+          <button
+            onClick={() => setActive(PENDING_TAB)}
+            className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-1.5 ${
+              active === PENDING_TAB ? 'bg-red-600 text-white' : 'bg-gray-800 text-red-400 hover:text-red-300'
+            }`}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-current inline-block" />
+            Pendientes ({pendingMatches.length})
+          </button>
+        )}
+
+        {/* Tabs por fecha */}
         {grouped.map((g) => {
+          const pendingInDate = g.matches.filter(isPending).length
           const isActive = g.date === active
           return (
             <button
               key={g.date}
               onClick={() => setActive(g.date)}
-              className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+              className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-1.5 ${
                 isActive ? 'bg-emerald-600 text-white' : 'bg-gray-800 text-gray-400 hover:text-white'
               }`}
             >
               {g.label}
+              {pendingInDate > 0 && (
+                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isActive ? 'bg-white' : 'bg-red-500'}`} />
+              )}
             </button>
           )
         })}
       </div>
 
+      {/* Matches */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
-        {current?.matches.map((match) => (
+        {currentMatches.length === 0 && active === PENDING_TAB && (
+          <div className="text-center text-gray-500 text-sm py-12">
+            ¡Todos los pronósticos al día! 🎉
+          </div>
+        )}
+        {currentMatches.map((match) => (
           <MatchCard
             key={match.id}
             match={match}
