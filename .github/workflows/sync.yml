@@ -1,0 +1,17 @@
+name: Sync Matches
+
+on:
+  schedule:
+    - cron: '*/20 * * * *'   # cada 20 minutos
+  workflow_dispatch:           # también se puede disparar a mano desde GitHub
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sync matches from ESPN
+        run: |
+          curl -sf -X GET \
+            "${{ secrets.APP_URL }}/api/admin/sync" \
+            --max-time 30 \
+            --retry 2
