@@ -20,9 +20,13 @@ interface Props {
 export default function PredictionsTabs({ grouped, predMap: initialPredMap, allPredMap, users, currentUserId }: Props) {
   const [savedPreds, setSavedPreds] = useState<Record<string, { home: number; away: number }>>({})
 
+  function isPlaceholder(team: string): boolean {
+    return /winner|loser|round of|quarterfinal|semifinal|tbd/i.test(team)
+  }
+
   function isPending(match: Match): boolean {
     if (isMatchLocked(match.match_date, match.status)) return false
-    if (match.home_team === 'TBD' || match.away_team === 'TBD') return false
+    if (isPlaceholder(match.home_team) || isPlaceholder(match.away_team)) return false
     return !savedPreds[match.id] && !initialPredMap[match.id]
   }
 

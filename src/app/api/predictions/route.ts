@@ -37,7 +37,8 @@ export async function POST(req: NextRequest) {
 
   if (!match) return NextResponse.json({ error: 'Partido no encontrado' }, { status: 404 })
 
-  if (match.home_team === 'TBD' || match.away_team === 'TBD') {
+  const isPlaceholder = (t: string) => /winner|loser|round of|quarterfinal|semifinal|tbd/i.test(t)
+  if (isPlaceholder(match.home_team) || isPlaceholder(match.away_team)) {
     return NextResponse.json({ error: 'Los equipos aún no están definidos' }, { status: 400 })
   }
 
