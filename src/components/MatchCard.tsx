@@ -13,9 +13,10 @@ interface Props {
   allPreds: Record<string, PredEntry>
   users: User[]
   currentUserId: string
+  onSaved: (matchId: string, home: number, away: number) => void
 }
 
-export default function MatchCard({ match, prediction: initialPred, allPreds, users, currentUserId }: Props) {
+export default function MatchCard({ match, prediction: initialPred, allPreds, users, currentUserId, onSaved }: Props) {
   const locked = isMatchLocked(match.match_date, match.status)
   const [home, setHome] = useState(initialPred?.home_score?.toString() ?? '')
   const [away, setAway] = useState(initialPred?.away_score?.toString() ?? '')
@@ -37,6 +38,7 @@ export default function MatchCard({ match, prediction: initialPred, allPreds, us
       })
       if (res.ok) {
         setSaved(true)
+        onSaved(match.id, parseInt(home), parseInt(away))
         setTimeout(() => setSaved(false), 2000)
       } else {
         const d = await res.json()

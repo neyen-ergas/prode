@@ -14,7 +14,7 @@ interface Props {
   currentUserId: string
 }
 
-export default function PredictionsTabs({ grouped, predMap, allPredMap, users, currentUserId }: Props) {
+export default function PredictionsTabs({ grouped, predMap: initialPredMap, allPredMap, users, currentUserId }: Props) {
   const initialTab = () => {
     const now = new Date()
     const upcoming = grouped.find((g) => g.matches.some((m) => new Date(m.match_date) >= now))
@@ -22,7 +22,27 @@ export default function PredictionsTabs({ grouped, predMap, allPredMap, users, c
   }
 
   const [active, setActive] = useState<string>(initialTab)
+  // Mantiene las predicciones guardadas en esta sesión para que persistan al cambiar de tab
+  const [savedPreds, setSavedPreds] = useState<Record<string, { home: number; away: number }>>({})
+
   const current = grouped.find((g) => g.date === active)
+
+  function handleSaved(matchId: string, home: number, away: number) {
+    setSavedPreds((prev) => ({ ...prev, [matchId]: { home, away } }))
+  }
+
+  function getPrediction(matchId: string): Prediction | null {
+    const saved = savedPreds[matchId]
+    if (saved) {
+      const base = initialPredMap[matchId]
+      return {
+        ...(base ?? { id: '', user_id: currentUserId, match_id: matchId, points: null, updated_at: '' }),
+        home_score: saved.home,
+        away_score: saved.away,
+      }
+    }
+    return initialPredMap[matchId] ?? null
+  }
 
   return (
     <div className="flex flex-col h-full">
@@ -48,10 +68,11 @@ export default function PredictionsTabs({ grouped, predMap, allPredMap, users, c
           <MatchCard
             key={match.id}
             match={match}
-            prediction={predMap[match.id] ?? null}
+            prediction={getPrediction(match.id)}
             allPreds={allPredMap[match.id] ?? {}}
             users={users}
             currentUserId={currentUserId}
+            onSaved={handleSaved}
           />
         ))}
       </div>
