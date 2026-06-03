@@ -1,25 +1,21 @@
 import { getSession } from '@/lib/auth'
 import { createAdminClient } from '@/lib/supabase/server'
 import PredictionsTabs from '@/components/PredictionsTabs'
-import type { Match, Prediction } from '@/lib/types'
+import type { Match, Prediction, User } from '@/lib/types'
 
 export const dynamic = 'force-dynamic'
 
 function toArgDate(iso: string): string {
   return new Date(iso).toLocaleDateString('es-AR', {
     timeZone: 'America/Argentina/Buenos_Aires',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
+    year: 'numeric', month: '2-digit', day: '2-digit',
   })
 }
 
 function toArgDateLabel(iso: string): string {
   return new Date(iso).toLocaleDateString('es-AR', {
     timeZone: 'America/Argentina/Buenos_Aires',
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
+    weekday: 'short', day: 'numeric', month: 'short',
   })
 }
 
@@ -27,10 +23,13 @@ export default async function PredictionsPage() {
   const session = await getSession()
   const supabase = createAdminClient()
 
-  const [{ data: matches }, { data: predictions }] = await Promise.all([
-    supabase.from('matches').select('*').order('match_date', { ascending: true }),
-    supabase.from('predictions').select('*').eq('user_id', session!.userId),
-  ])
+  const [{ data: matches }, { data: myPreds }, { data: allPreds }, { data: users }] =
+    await Promise.all([
+      supabase.from('matches').select('*').order('match_date', { ascending: true }),
+      supabase.from('predictions').select('*').eq('user_id', session!.userId),
+      supabase.from('predictions').select('user_id, match_id, home_score, away_score, points'),
+      supabase.from('users').select('id, name, color').order('name'),
+    ])
 
   if (!matches?.length) {
     return (
@@ -41,12 +40,19 @@ export default async function PredictionsPage() {
     )
   }
 
+  // My predictions: matchId → Prediction
   const predMap: Record<string, Prediction> = {}
-  for (const p of (predictions ?? []) as Prediction[]) {
-    predMap[p.match_id] = p
+  for (const p of (myPreds ?? []) as Prediction[]) predMap[p.match_id] = p
+
+  // All predictions: matchId → userId → {home, away, points}
+  type PredEntry = { home_score: number; away_score: number; points: number | null }
+  const allPredMap: Record<string, Record<string, PredEntry>> = {}
+  for (const p of (allPreds ?? []) as Array<PredEntry & { user_id: string; match_id: string }>) {
+    if (!allPredMap[p.match_id]) allPredMap[p.match_id] = {}
+    allPredMap[p.match_id][p.user_id] = { home_score: p.home_score, away_score: p.away_score, points: p.points }
   }
 
-  // Group matches by Argentine date
+  // Group by Argentine date
   const dateMap = new Map<string, Match[]>()
   for (const match of matches as Match[]) {
     const key = toArgDate(match.match_date)
@@ -60,5 +66,13 @@ export default async function PredictionsPage() {
     matches: ms,
   }))
 
-  return <PredictionsTabs grouped={grouped} predMap={predMap} />
+  return (
+    <PredictionsTabs
+      grouped={grouped}
+      predMap={predMap}
+      allPredMap={allPredMap}
+      users={(users ?? []) as User[]}
+      currentUserId={session!.userId}
+    />
+  )
 }
