@@ -21,6 +21,7 @@ function toArgDateLabel(iso: string): string {
 
 export default async function PredictionsPage() {
   const session = await getSession()
+  const family = session?.familyGroup ?? 'ergas'
   const supabase = createAdminClient()
 
   const [{ data: matches }, { data: myPreds }, { data: allPreds }, { data: users }] =
@@ -28,7 +29,7 @@ export default async function PredictionsPage() {
       supabase.from('matches').select('*').order('match_date', { ascending: true }),
       supabase.from('predictions').select('*').eq('user_id', session!.userId),
       supabase.from('predictions').select('user_id, match_id, home_score, away_score, points'),
-      supabase.from('users').select('id, name, color, emoji').order('name'),
+      supabase.from('users').select('id, name, color, emoji').eq('family_group', family).order('name'),
     ])
 
   if (!matches?.length) {
@@ -44,10 +45,14 @@ export default async function PredictionsPage() {
   const predMap: Record<string, Prediction> = {}
   for (const p of (myPreds ?? []) as Prediction[]) predMap[p.match_id] = p
 
+  // Solo predicciones de usuarios de esta familia
+  const familyUserIds = new Set((users ?? []).map((u: User) => u.id))
+
   // All predictions: matchId → userId → {home, away, points}
   type PredEntry = { home_score: number; away_score: number; points: number | null }
   const allPredMap: Record<string, Record<string, PredEntry>> = {}
   for (const p of (allPreds ?? []) as Array<PredEntry & { user_id: string; match_id: string }>) {
+    if (!familyUserIds.has(p.user_id)) continue
     if (!allPredMap[p.match_id]) allPredMap[p.match_id] = {}
     allPredMap[p.match_id][p.user_id] = { home_score: p.home_score, away_score: p.away_score, points: p.points }
   }
