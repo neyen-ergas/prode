@@ -102,7 +102,6 @@ export default function MatchCard({ match, prediction: initialPred, allPreds, us
 
         {/* My prediction inputs */}
         <div className="flex items-center gap-2">
-          {/* Spacer igual al ancho del botón para centrar los inputs */}
           <div className="w-16 shrink-0" />
           <div className="flex-1">
             <input
@@ -157,6 +156,9 @@ export default function MatchCard({ match, prediction: initialPred, allPreds, us
           {users.map((u) => {
             const pred = allPreds[u.id]
             const isMe = u.id === currentUserId
+            // Mostrar score solo si: el partido ya empezó (locked) o es el propio usuario
+            const showScore = locked || isMe
+
             return (
               <div
                 key={u.id}
@@ -167,18 +169,23 @@ export default function MatchCard({ match, prediction: initialPred, allPreds, us
                   {u.name}
                 </span>
                 {pred ? (
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-white tabular-nums">
-                      {pred.home_score} – {pred.away_score}
-                    </span>
-                    {hasResult && pred.points !== null && (
-                      pred.points === POINTS.EXACT_SCORE
-                        ? <span className="text-emerald-400 text-xs font-medium">+{pred.points}</span>
-                        : pred.points === POINTS.CORRECT_RESULT
-                        ? <span className="text-yellow-400 text-xs font-medium">+{pred.points}</span>
-                        : <span className="text-gray-600 text-xs">0</span>
-                    )}
-                  </div>
+                  showScore ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-white tabular-nums">
+                        {pred.home_score} – {pred.away_score}
+                      </span>
+                      {hasResult && pred.points !== null && (
+                        pred.points === POINTS.EXACT_SCORE
+                          ? <span className="text-emerald-400 text-xs font-medium">+{pred.points}</span>
+                          : pred.points === POINTS.CORRECT_RESULT
+                          ? <span className="text-yellow-400 text-xs font-medium">+{pred.points}</span>
+                          : <span className="text-gray-600 text-xs">0</span>
+                      )}
+                    </div>
+                  ) : (
+                    // Partido no empezado y no es el usuario actual: solo check
+                    <span className="text-emerald-500 text-base" title="Ya cargó su pronóstico">✓</span>
+                  )
                 ) : (
                   <span className="text-gray-600 text-xs italic">sin pronóstico</span>
                 )}
