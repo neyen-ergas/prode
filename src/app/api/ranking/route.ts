@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
+import { getSession } from '@/lib/auth'
 import type { RankingEntry, User } from '@/lib/types'
 import { POINTS } from '@/lib/scoring'
 
@@ -7,11 +8,14 @@ type PredRow = { user_id: string; points: number | null }
 type ChampRow = { user_id: string; team: string }
 
 export async function GET() {
+  const session = await getSession()
+  const family = session?.familyGroup ?? 'ergas'
+
   const supabase = createAdminClient()
 
   const [{ data: users }, { data: predictions }, { data: champions }, { data: finishedMatch }] =
     await Promise.all([
-      supabase.from('users').select('id, name, color, created_at'),
+      supabase.from('users').select('id, name, color, created_at').eq('family_group', family),
       supabase.from('predictions').select('user_id, points'),
       supabase.from('champion_predictions').select('user_id, team'),
       supabase.from('matches').select('home_team').eq('status', 'FINISHED').limit(1),
@@ -32,8 +36,13 @@ export async function GET() {
         : finalMatch.away_team
   }
 
+  // Only include predictions from users in this family
+  const familyUserIds = new Set((users ?? []).map((u: { id: string }) => u.id))
+
   const ranking: RankingEntry[] = (users ?? [] as User[]).map((user: User) => {
-    const userPredictions = (predictions ?? [] as PredRow[]).filter((p: PredRow) => p.user_id === user.id)
+    const userPredictions = (predictions ?? [] as PredRow[]).filter(
+      (p: PredRow) => p.user_id === user.id && familyUserIds.has(p.user_id)
+    )
     const matchPoints = userPredictions.reduce((sum: number, p: PredRow) => sum + (p.points ?? 0), 0)
     const exactScores = userPredictions.filter((p: PredRow) => p.points === POINTS.EXACT_SCORE).length
     const correctResults = userPredictions.filter((p: PredRow) => p.points === POINTS.CORRECT_RESULT).length

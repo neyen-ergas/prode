@@ -9,6 +9,7 @@ const COOKIE_NAME = 'prode_session'
 export interface SessionPayload {
   userId: string
   userName: string
+  familyGroup: string
 }
 
 export async function createSession(payload: SessionPayload) {

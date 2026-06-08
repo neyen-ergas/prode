@@ -10,11 +10,12 @@ type PredRow = { user_id: string; match_id: string; home_score: number; away_sco
 
 export default async function RankingPage() {
   const session = await getSession()
+  const family = session?.familyGroup ?? 'ergas'
   const supabase = createAdminClient()
 
   const [{ data: allUsers }, { data: predictions }, { data: matches }, { data: anyFinished }] =
     await Promise.all([
-      supabase.from('users').select('id, name, color, emoji, created_at').order('name'),
+      supabase.from('users').select('id, name, color, emoji, created_at').eq('family_group', family).order('name'),
       supabase.from('predictions').select('user_id, match_id, home_score, away_score, points'),
       supabase.from('matches').select('*').order('match_date', { ascending: true }),
       supabase.from('matches').select('id').eq('status', 'FINISHED').limit(1),
@@ -22,16 +23,20 @@ export default async function RankingPage() {
 
   const allPreds = (predictions ?? []) as PredRow[]
 
+  // Only show predictions from users within this family
+  const familyUserIds = new Set((allUsers ?? []).map((u: { id: string }) => u.id))
+  const familyPreds = allPreds.filter((p) => familyUserIds.has(p.user_id))
+
   // userId -> matchId -> pred
   const userPredMap: Record<string, Record<string, { home_score: number; away_score: number; points: number | null }>> = {}
-  for (const p of allPreds) {
+  for (const p of familyPreds) {
     if (!userPredMap[p.user_id]) userPredMap[p.user_id] = {}
     userPredMap[p.user_id][p.match_id] = { home_score: p.home_score, away_score: p.away_score, points: p.points }
   }
 
   type RankEntry = { user: User; total_points: number; exact_scores: number; correct_results: number; predictions_count: number }
   const ranking: RankEntry[] = (allUsers ?? [] as User[]).map((user: User) => {
-    const userPreds = allPreds.filter((p) => p.user_id === user.id)
+    const userPreds = familyPreds.filter((p) => p.user_id === user.id)
     const total_points = userPreds.reduce((s, p) => s + (p.points ?? 0), 0)
     const exact_scores = userPreds.filter((p) => p.points === POINTS.EXACT_SCORE).length
     const correct_results = userPreds.filter((p) => p.points === POINTS.CORRECT_RESULT).length
