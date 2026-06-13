@@ -23,7 +23,7 @@ export default async function PredictionsPage() {
     await Promise.all([
       supabase.from('matches').select('*').order('match_date', { ascending: true }),
       supabase.from('predictions').select('*').eq('user_id', session!.userId),
-      supabase.from('predictions').select('user_id, match_id, home_score, away_score, points'),
+      supabase.from('predictions').select('user_id, match_id, home_score, away_score, points').limit(10000),
       supabase.from('users').select('id, name, color, emoji').eq('family_group', family).order('name'),
     ])
   if (!matches?.length) {
@@ -34,14 +34,9 @@ export default async function PredictionsPage() {
       </div>
     )
   }
-  // My predictions: matchId → Prediction
   const predMap: Record<string, Prediction> = {}
   for (const p of (myPreds ?? []) as Prediction[]) predMap[p.match_id] = p
-  // Solo predicciones de usuarios de esta familia
   const familyUserIds = new Set((users ?? []).map((u: User) => u.id))
-  console.log('DEBUG family:', family)
-  console.log('DEBUG familyUserIds:', [...familyUserIds])
-  // All predictions: matchId → userId → {home, away, points}
   type PredEntry = { home_score: number; away_score: number; points: number | null }
   const allPredMap: Record<string, Record<string, PredEntry>> = {}
   for (const p of (allPreds ?? []) as Array<PredEntry & { user_id: string; match_id: string }>) {
@@ -49,8 +44,6 @@ export default async function PredictionsPage() {
     if (!allPredMap[p.match_id]) allPredMap[p.match_id] = {}
     allPredMap[p.match_id][p.user_id] = { home_score: p.home_score, away_score: p.away_score, points: p.points }
   }
-  console.log('DEBUG allPredMap 760415:', JSON.stringify(allPredMap['760415']))
-  // Group by Argentine date
   const dateMap = new Map<string, Match[]>()
   for (const match of matches as Match[]) {
     const key = toArgDate(match.match_date)
