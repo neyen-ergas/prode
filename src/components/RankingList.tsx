@@ -21,9 +21,12 @@ interface Props {
   currentUserId: string
   userPredMap: Record<string, Record<string, PredRow>>  // userId -> matchId -> pred
   matches: Match[]
+  isFathersDay?: boolean
 }
 
-export default function RankingList({ ranking, currentUserId, userPredMap, matches }: Props) {
+const FATHERS_DAY_NAMES = new Set(['Juan', 'Juanma', 'Hugo'])
+
+export default function RankingList({ ranking, currentUserId, userPredMap, matches, isFathersDay = false }: Props) {
   const [expanded, setExpanded] = useState<string | null>(null)
   const medals = ['🥇', '🥈', '🥉']
 
@@ -62,6 +65,9 @@ export default function RankingList({ ranking, currentUserId, userPredMap, match
               <div className="flex-1 min-w-0">
                 <div className="font-semibold text-white text-sm flex items-center gap-1">
                   {entry.user.name}
+                  {isFathersDay && FATHERS_DAY_NAMES.has(entry.user.name) && (
+                    <span title="¡Feliz Día del Padre!">👨</span>
+                  )}
                   {isMe && <span className="text-xs text-emerald-400">(vos)</span>}
                 </div>
                 <div className="text-xs text-gray-500 flex gap-2 mt-0.5">
