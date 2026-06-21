@@ -38,8 +38,17 @@ export default async function RankingPage() {
     return a.user.name.localeCompare(b.user.name)
   })
   const hasStarted = (anyFinished?.length ?? 0) > 0
+  const todayAR = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' })
+  const isFathersDay = todayAR === '2026-06-21'
   return (
     <div className="p-4 space-y-4">
+      {isFathersDay && (
+        <div className="rounded-2xl bg-gradient-to-r from-emerald-500/15 to-yellow-500/15 border border-emerald-500/30 p-4 text-center">
+          <p className="text-white font-semibold text-sm">
+            🎉 ¡Feliz Día del Padre, Juan, Juanma y Hugo! 👨‍👦
+          </p>
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-white">Ranking</h1>
         {!hasStarted && (
@@ -53,6 +62,7 @@ export default async function RankingPage() {
         currentUserId={session!.userId}
         userPredMap={userPredMap}
         matches={(matches ?? []) as Match[]}
+        isFathersDay={isFathersDay}
       />
       <p className="text-xs text-gray-600 text-center pt-2">
         Exacto = {POINTS.EXACT_SCORE} pts · Resultado = {POINTS.CORRECT_RESULT} pt
