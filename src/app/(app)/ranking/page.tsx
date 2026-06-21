@@ -39,7 +39,9 @@ export default async function RankingPage() {
   })
   const hasStarted = (anyFinished?.length ?? 0) > 0
   const todayAR = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' })
-  const isFathersDay = todayAR === '2026-06-21'
+  const FATHERS_DAY_NAMES = new Set(['Juan', 'Juanma', 'Hugo'])
+  const familyHasFathers = ranking.some((r) => FATHERS_DAY_NAMES.has(r.user.name))
+  const isFathersDay = todayAR === '2026-06-21' && familyHasFathers
   return (
     <div className="p-4 space-y-4">
       {isFathersDay && (
