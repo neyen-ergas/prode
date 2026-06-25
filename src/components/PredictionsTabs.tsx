@@ -19,6 +19,7 @@ interface Props {
 
 export default function PredictionsTabs({ grouped, predMap: initialPredMap, allPredMap, users, currentUserId }: Props) {
   const [savedPreds, setSavedPreds] = useState<Record<string, { home: number; away: number }>>({})
+  const [finishedOpen, setFinishedOpen] = useState(false)
 
   function isPlaceholder(team: string): boolean {
     return /winner|loser|round of|quarterfinal|semifinal|tbd|place|group [a-z]/i.test(team)
@@ -44,6 +45,12 @@ export default function PredictionsTabs({ grouped, predMap: initialPredMap, allP
     setSavedPreds((prev) => ({ ...prev, [matchId]: { home, away } }))
   }
 
+  // Cerrar acordeón al cambiar de tab
+  function handleTabChange(tab: string) {
+    setActive(tab)
+    setFinishedOpen(false)
+  }
+
   function getPrediction(matchId: string): Prediction | null {
     const saved = savedPreds[matchId]
     if (saved) {
@@ -62,6 +69,9 @@ export default function PredictionsTabs({ grouped, predMap: initialPredMap, allP
       ? pendingMatches
       : grouped.find((g) => g.date === active)?.matches ?? []
 
+  const finishedMatches = currentMatches.filter((m) => m.status === 'FINISHED')
+  const activeMatches = currentMatches.filter((m) => m.status !== 'FINISHED')
+
   return (
     <div className="flex flex-col h-full">
       {/* Tabs */}
@@ -70,7 +80,7 @@ export default function PredictionsTabs({ grouped, predMap: initialPredMap, allP
         {/* Tab pendientes */}
         {pendingMatches.length > 0 && (
           <button
-            onClick={() => setActive(PENDING_TAB)}
+            onClick={() => handleTabChange(PENDING_TAB)}
             className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-1.5 ${
               active === PENDING_TAB ? 'bg-red-600 text-white' : 'bg-gray-800 text-red-400 hover:text-red-300'
             }`}
@@ -87,7 +97,7 @@ export default function PredictionsTabs({ grouped, predMap: initialPredMap, allP
           return (
             <button
               key={g.date}
-              onClick={() => setActive(g.date)}
+              onClick={() => handleTabChange(g.date)}
               className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-1.5 ${
                 isActive ? 'bg-emerald-600 text-white' : 'bg-gray-800 text-gray-400 hover:text-white'
               }`}
@@ -108,7 +118,9 @@ export default function PredictionsTabs({ grouped, predMap: initialPredMap, allP
             ¡Todos los pronósticos al día! 🎉
           </div>
         )}
-        {currentMatches.map((match) => (
+
+        {/* Partidos activos / próximos */}
+        {activeMatches.map((match) => (
           <MatchCard
             key={match.id}
             match={match}
@@ -119,6 +131,38 @@ export default function PredictionsTabs({ grouped, predMap: initialPredMap, allP
             onSaved={handleSaved}
           />
         ))}
+
+        {/* Acordeón de partidos jugados */}
+        {finishedMatches.length > 0 && (
+          <div className="rounded-2xl overflow-hidden border border-gray-800">
+            <button
+              onClick={() => setFinishedOpen((v) => !v)}
+              className="w-full flex items-center justify-between px-4 py-3 bg-gray-900 hover:bg-gray-800 transition-colors"
+            >
+              <span className="text-xs font-medium text-gray-400">
+                ✅ Jugados ({finishedMatches.length})
+              </span>
+              <span className={`text-gray-500 text-xs transition-transform duration-200 ${finishedOpen ? 'rotate-180' : ''}`}>
+                ▼
+              </span>
+            </button>
+            {finishedOpen && (
+              <div className="border-t border-gray-800 p-3 space-y-3 bg-gray-900/40">
+                {finishedMatches.map((match) => (
+                  <MatchCard
+                    key={match.id}
+                    match={match}
+                    prediction={getPrediction(match.id)}
+                    allPreds={allPredMap[match.id] ?? {}}
+                    users={users}
+                    currentUserId={currentUserId}
+                    onSaved={handleSaved}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )
