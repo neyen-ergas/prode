@@ -69,8 +69,8 @@ export default function PredictionsTabs({ grouped, predMap: initialPredMap, allP
       ? pendingMatches
       : grouped.find((g) => g.date === active)?.matches ?? []
 
-  const finishedMatches = currentMatches.filter((m) => m.status === 'FINISHED')
-  const activeMatches = currentMatches.filter((m) => m.status !== 'FINISHED')
+  const finishedMatches = currentMatches.filter((m) => isMatchLocked(m.match_date, m.status))
+  const activeMatches = currentMatches.filter((m) => !isMatchLocked(m.match_date, m.status))
 
   return (
     <div className="flex flex-col h-full">
