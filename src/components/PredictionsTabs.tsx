@@ -20,6 +20,9 @@ interface Props {
 export default function PredictionsTabs({ grouped, predMap: initialPredMap, allPredMap, users, currentUserId }: Props) {
   const [savedPreds, setSavedPreds] = useState<Record<string, { home: number; away: number }>>({})
   const [finishedOpen, setFinishedOpen] = useState(false)
+  const [pastTabsOpen, setPastTabsOpen] = useState(false)
+
+  const now = new Date()
 
   function isPlaceholder(team: string): boolean {
     return /winner|loser|round of|quarterfinal|semifinal|tbd|place|group [a-z]/i.test(team)
@@ -33,10 +36,13 @@ export default function PredictionsTabs({ grouped, predMap: initialPredMap, allP
 
   const pendingMatches = grouped.flatMap((g) => g.matches).filter(isPending)
 
+  // Separar fechas pasadas y futuras
+  const pastGroups = grouped.filter((g) => g.matches.every((m) => new Date(m.match_date) < now))
+  const upcomingGroups = grouped.filter((g) => g.matches.some((m) => new Date(m.match_date) >= now))
+
   const initialTab = () => {
     if (pendingMatches.length > 0) return PENDING_TAB
-    const now = new Date()
-    return grouped.find((g) => g.matches.some((m) => new Date(m.match_date) >= now))?.date ?? grouped[0]?.date ?? ''
+    return upcomingGroups[0]?.date ?? grouped[0]?.date ?? ''
   }
 
   const [active, setActive] = useState<string>(initialTab)
@@ -45,7 +51,6 @@ export default function PredictionsTabs({ grouped, predMap: initialPredMap, allP
     setSavedPreds((prev) => ({ ...prev, [matchId]: { home, away } }))
   }
 
-  // Cerrar acordeón al cambiar de tab
   function handleTabChange(tab: string) {
     setActive(tab)
     setFinishedOpen(false)
@@ -72,6 +77,25 @@ export default function PredictionsTabs({ grouped, predMap: initialPredMap, allP
   const finishedMatches = currentMatches.filter((m) => isMatchLocked(m.match_date, m.status))
   const activeMatches = currentMatches.filter((m) => !isMatchLocked(m.match_date, m.status))
 
+  function renderTab(g: { date: string; label: string; matches: Match[] }) {
+    const pendingInDate = g.matches.filter(isPending).length
+    const isActive = g.date === active
+    return (
+      <button
+        key={g.date}
+        onClick={() => handleTabChange(g.date)}
+        className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-1.5 ${
+          isActive ? 'bg-emerald-600 text-white' : 'bg-gray-800 text-gray-400 hover:text-white'
+        }`}
+      >
+        {g.label}
+        {pendingInDate > 0 && (
+          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isActive ? 'bg-white' : 'bg-red-500'}`} />
+        )}
+      </button>
+    )
+  }
+
   return (
     <div className="flex flex-col h-full">
       {/* Tabs */}
@@ -90,25 +114,24 @@ export default function PredictionsTabs({ grouped, predMap: initialPredMap, allP
           </button>
         )}
 
-        {/* Tabs por fecha */}
-        {grouped.map((g) => {
-          const pendingInDate = g.matches.filter(isPending).length
-          const isActive = g.date === active
-          return (
-            <button
-              key={g.date}
-              onClick={() => handleTabChange(g.date)}
-              className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-1.5 ${
-                isActive ? 'bg-emerald-600 text-white' : 'bg-gray-800 text-gray-400 hover:text-white'
-              }`}
-            >
-              {g.label}
-              {pendingInDate > 0 && (
-                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isActive ? 'bg-white' : 'bg-red-500'}`} />
-              )}
-            </button>
-          )
-        })}
+        {/* Botón fechas anteriores */}
+        {pastGroups.length > 0 && (
+          <button
+            onClick={() => setPastTabsOpen((v) => !v)}
+            className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-1.5 ${
+              pastTabsOpen ? 'bg-gray-600 text-white' : 'bg-gray-800 text-gray-500 hover:text-gray-300'
+            }`}
+          >
+            Anteriores ({pastGroups.length})
+            <span className={`transition-transform duration-200 inline-block ${pastTabsOpen ? 'rotate-180' : ''}`}>▼</span>
+          </button>
+        )}
+
+        {/* Fechas pasadas expandidas */}
+        {pastTabsOpen && pastGroups.map(renderTab)}
+
+        {/* Fechas próximas siempre visibles */}
+        {upcomingGroups.map(renderTab)}
       </div>
 
       {/* Matches */}
