@@ -19,10 +19,7 @@ interface Props {
 
 export default function PredictionsTabs({ grouped, predMap: initialPredMap, allPredMap, users, currentUserId }: Props) {
   const [savedPreds, setSavedPreds] = useState<Record<string, { home: number; away: number }>>({})
-  const [finishedOpen, setFinishedOpen] = useState(false)
   const [pastTabsOpen, setPastTabsOpen] = useState(false)
-
-  const now = new Date()
 
   function isPlaceholder(team: string): boolean {
     return /winner|loser|round of|quarterfinal|semifinal|tbd|place|group [a-z]/i.test(team)
@@ -36,11 +33,15 @@ export default function PredictionsTabs({ grouped, predMap: initialPredMap, allP
 
   const pendingMatches = grouped.flatMap((g) => g.matches).filter(isPending)
 
-  // Separar fechas pasadas y futuras
-  const pastGroups = grouped.filter((g) => g.matches.every((m) => new Date(m.match_date) < now))
-  const upcomingGroups = grouped.filter((g) => g.matches.some((m) => new Date(m.match_date) >= now))
+  // Un grupo es "pasado" si todos sus partidos están bloqueados
+  const pastGroups = grouped.filter((g) =>
+    g.matches.every((m) => isMatchLocked(m.match_date, m.status))
+  )
+  const upcomingGroups = grouped.filter((g) =>
+    g.matches.some((m) => !isMatchLocked(m.match_date, m.status))
+  )
 
-  const initialTab = () => {
+  const initialTab = (): string => {
     if (pendingMatches.length > 0) return PENDING_TAB
     return upcomingGroups[0]?.date ?? grouped[0]?.date ?? ''
   }
@@ -53,7 +54,6 @@ export default function PredictionsTabs({ grouped, predMap: initialPredMap, allP
 
   function handleTabChange(tab: string) {
     setActive(tab)
-    setFinishedOpen(false)
   }
 
   function getPrediction(matchId: string): Prediction | null {
@@ -73,9 +73,6 @@ export default function PredictionsTabs({ grouped, predMap: initialPredMap, allP
     active === PENDING_TAB
       ? pendingMatches
       : grouped.find((g) => g.date === active)?.matches ?? []
-
-  const finishedMatches = currentMatches.filter((m) => isMatchLocked(m.match_date, m.status))
-  const activeMatches = currentMatches.filter((m) => !isMatchLocked(m.match_date, m.status))
 
   function renderTab(g: { date: string; label: string; matches: Match[] }) {
     const pendingInDate = g.matches.filter(isPending).length
@@ -99,7 +96,7 @@ export default function PredictionsTabs({ grouped, predMap: initialPredMap, allP
   return (
     <div className="flex flex-col h-full">
       {/* Tabs */}
-      <div className="flex gap-2 overflow-x-auto px-4 py-3 scrollbar-none border-b border-gray-800 shrink-0">
+      <div className="flex flex-wrap gap-2 px-4 py-3 border-b border-gray-800 shrink-0">
 
         {/* Tab pendientes */}
         {pendingMatches.length > 0 && (
@@ -127,10 +124,10 @@ export default function PredictionsTabs({ grouped, predMap: initialPredMap, allP
           </button>
         )}
 
-        {/* Fechas pasadas expandidas */}
+        {/* Fechas pasadas — se muestran al expandir */}
         {pastTabsOpen && pastGroups.map(renderTab)}
 
-        {/* Fechas próximas siempre visibles */}
+        {/* Fechas próximas — siempre visibles */}
         {upcomingGroups.map(renderTab)}
       </div>
 
@@ -141,9 +138,7 @@ export default function PredictionsTabs({ grouped, predMap: initialPredMap, allP
             ¡Todos los pronósticos al día! 🎉
           </div>
         )}
-
-        {/* Partidos activos / próximos */}
-        {activeMatches.map((match) => (
+        {currentMatches.map((match) => (
           <MatchCard
             key={match.id}
             match={match}
@@ -154,39 +149,8 @@ export default function PredictionsTabs({ grouped, predMap: initialPredMap, allP
             onSaved={handleSaved}
           />
         ))}
-
-        {/* Acordeón de partidos jugados */}
-        {finishedMatches.length > 0 && (
-          <div className="rounded-2xl overflow-hidden border border-gray-800">
-            <button
-              onClick={() => setFinishedOpen((v) => !v)}
-              className="w-full flex items-center justify-between px-4 py-3 bg-gray-900 hover:bg-gray-800 transition-colors"
-            >
-              <span className="text-xs font-medium text-gray-400">
-                ✅ Jugados ({finishedMatches.length})
-              </span>
-              <span className={`text-gray-500 text-xs transition-transform duration-200 ${finishedOpen ? 'rotate-180' : ''}`}>
-                ▼
-              </span>
-            </button>
-            {finishedOpen && (
-              <div className="border-t border-gray-800 p-3 space-y-3 bg-gray-900/40">
-                {finishedMatches.map((match) => (
-                  <MatchCard
-                    key={match.id}
-                    match={match}
-                    prediction={getPrediction(match.id)}
-                    allPreds={allPredMap[match.id] ?? {}}
-                    users={users}
-                    currentUserId={currentUserId}
-                    onSaved={handleSaved}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        )}
       </div>
     </div>
   )
 }
+
