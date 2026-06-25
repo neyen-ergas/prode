@@ -96,7 +96,12 @@ export default function PredictionsTabs({ grouped, predMap: initialPredMap, allP
   return (
     <div className="flex flex-col h-full">
       {/* Tabs */}
-      <div className="flex flex-wrap gap-2 px-4 py-3 border-b border-gray-800 shrink-0">
+      // ANTES
+<div className="flex flex-wrap gap-2 px-4 py-3 border-b border-gray-800 shrink-0">
+
+// DESPUÉS
+<div className="flex gap-2 overflow-x-auto px-4 py-3 scrollbar-none border-b border-gray-800 shrink-0">
+
 
         {/* Tab pendientes */}
         {pendingMatches.length > 0 && (
