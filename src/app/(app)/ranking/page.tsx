@@ -63,7 +63,7 @@ export default async function RankingPage() {
               style={{
                 left: item.left,
                 opacity: 0.35,
-                animation: `money-fall-card ${item.dur} linear ${item.delay} infinite`,
+                animation: `money-fall-card ${item.dur} linear ${item.delay} infinite backwards`,
               }}
             >{item.emoji}</span>
           ))}
