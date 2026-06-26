@@ -10,6 +10,7 @@ export interface SessionPayload {
   userId: string
   userName: string
   familyGroup: string
+  language: string
 }
 
 export async function createSession(payload: SessionPayload) {

@@ -62,6 +62,7 @@ export default async function PredictionsPage() {
       allPredMap={allPredMap}
       users={(users ?? []) as User[]}
       currentUserId={session!.userId}
+      language={session!.language ?? 'en'}
     />
   )
 }

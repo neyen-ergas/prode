@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
   const supabase = createAdminClient()
   const { data: user, error } = await supabase
     .from('users')
-    .select('id, name, pin_hash, color, family_group')
+    .select('id, name, pin_hash, color, family_group, language')
     .eq('id', userId)
     .single()
 
@@ -37,6 +37,7 @@ export async function POST(req: NextRequest) {
     userId: user.id,
     userName: user.name,
     familyGroup: user.family_group,
+    language: user.language ?? 'en',
   })
   return NextResponse.json({ user: { id: user.id, name: user.name, color: user.color } })
 }

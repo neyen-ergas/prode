@@ -21,10 +21,7 @@ interface Props {
   currentUserId: string
   userPredMap: Record<string, Record<string, PredRow>>  // userId -> matchId -> pred
   matches: Match[]
-  isFathersDay?: boolean
 }
-
-const FATHERS_DAY_NAMES = new Set(['Juan', 'Juanma', 'Hugo'])
 
 const PODIUM = [
   { ring: 'ring-1 ring-amber-400/50', medal: '🥇', shimmer: 'rgba(251,191,36,0.22)', delay: '0s' },
@@ -32,7 +29,7 @@ const PODIUM = [
   { ring: 'ring-1 ring-orange-600/40', medal: '🥉', shimmer: 'rgba(234,88,12,0.16)', delay: '1.8s' },
 ]
 
-export default function RankingList({ ranking, currentUserId, userPredMap, matches, isFathersDay = false }: Props) {
+export default function RankingList({ ranking, currentUserId, userPredMap, matches }: Props) {
   const [expanded, setExpanded] = useState<string | null>(null)
   const leaderPoints = ranking[0]?.total_points ?? 0
 
@@ -88,11 +85,8 @@ export default function RankingList({ ranking, currentUserId, userPredMap, match
               <Avatar name={entry.user.name} color={entry.user.color} emoji={entry.user.emoji} size="lg" />
 
               <div className="flex-1 min-w-0">
-                <div className="font-semibold text-white text-sm flex items-center gap-1">
+                <div className="font-semibold text-white text-sm flex items-center gap-1.5">
                   {entry.user.name}
-                  {isFathersDay && FATHERS_DAY_NAMES.has(entry.user.name) && (
-                    <span title="¡Feliz Día del Padre!">👨</span>
-                  )}
                   {isMe && <span className="text-xs text-emerald-400">(vos)</span>}
                 </div>
                 <div className="text-xs text-gray-500 flex gap-2 mt-0.5">
