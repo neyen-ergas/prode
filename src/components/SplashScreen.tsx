@@ -16,7 +16,10 @@ export default function SplashScreen({ name }: { name: string }) {
 
   useEffect(() => {
     setTimeout(() => setFading(true), 1600)
-    setTimeout(() => setVisible(false), 2000)
+    setTimeout(() => {
+      setVisible(false)
+      window.dispatchEvent(new CustomEvent('splashend'))
+    }, 2000)
   }, [])
 
   if (!visible) return null

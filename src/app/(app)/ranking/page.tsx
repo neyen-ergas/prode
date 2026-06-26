@@ -40,8 +40,8 @@ export default async function RankingPage() {
   const hasStarted = (anyFinished?.length ?? 0) > 0
   return (
     <div className="p-4 space-y-4 relative">
-      {/* Premio — solo familia ergas */}
-      {family === 'ergas' && <div className="relative rounded-2xl overflow-hidden">
+      {/* Premio */}
+      <div className="relative rounded-2xl overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-amber-900/50 via-yellow-900/25 to-amber-900/50" />
         <div className="absolute inset-0 ring-1 ring-amber-400/35 rounded-2xl" />
         {/* Lluvia de plata contenida en el card */}
@@ -77,7 +77,7 @@ export default async function RankingPage() {
           <div className="text-xs text-amber-400/75 font-semibold uppercase tracking-widest">Premio</div>
           <div className="text-3xl font-bold text-amber-300 tabular-nums">$240.000</div>
         </div>
-      </div>}
+      </div>
 
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-white">Ranking</h1>

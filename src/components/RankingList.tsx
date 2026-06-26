@@ -1,10 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { Match, User } from '@/lib/types'
 import { POINTS } from '@/lib/scoring'
 import Avatar from './Avatar'
 import { formatMatchDate } from '@/lib/utils'
+
+const RANKING_ORDER_KEY = 'prode-ranking-order'
+const CARD_HEIGHT_PX = 80
 
 type PredRow = { home_score: number; away_score: number; points: number | null }
 
@@ -31,7 +34,50 @@ const PODIUM = [
 
 export default function RankingList({ ranking, currentUserId, userPredMap, matches }: Props) {
   const [expanded, setExpanded] = useState<string | null>(null)
+  const [anim, setAnim] = useState<{ deltas: Record<string, number>; active: boolean }>({ deltas: {}, active: false })
   const leaderPoints = ranking[0]?.total_points ?? 0
+
+  useEffect(() => {
+    const currentOrder = ranking.map(e => e.user.id)
+    const raw = localStorage.getItem(RANKING_ORDER_KEY)
+
+    if (raw) {
+      try {
+        const prevOrder: string[] = JSON.parse(raw)
+        const prevPos: Record<string, number> = {}
+        prevOrder.forEach((id, i) => { prevPos[id] = i })
+
+        const deltas: Record<string, number> = {}
+        let hasMove = false
+        currentOrder.forEach((id, newIdx) => {
+          const oldIdx = prevPos[id]
+          if (oldIdx !== undefined && oldIdx !== newIdx) {
+            deltas[id] = (oldIdx - newIdx) * CARD_HEIGHT_PX
+            hasMove = true
+          }
+        })
+
+        if (hasMove) {
+          const doAnimate = () => {
+            setAnim({ deltas, active: false })
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                setAnim({ deltas, active: true })
+              })
+            })
+          }
+          // Wait for splash to end; fallback 150ms if no splash is showing
+          const fallback = setTimeout(doAnimate, 150)
+          window.addEventListener('splashend', () => {
+            clearTimeout(fallback)
+            doAnimate()
+          }, { once: true })
+        }
+      } catch { /* corrupt storage */ }
+    }
+
+    localStorage.setItem(RANKING_ORDER_KEY, JSON.stringify(currentOrder))
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const matchMap = new Map(matches.map((m) => [m.id, m]))
   const finishedMatches = matches.filter((m) => m.status === 'FINISHED')
@@ -49,13 +95,25 @@ export default function RankingList({ ranking, currentUserId, userPredMap, match
         const podium = i < 3 ? PODIUM[i] : null
         const gap = leaderPoints - entry.total_points
 
+        const delta = anim.deltas[entry.user.id]
+        const cardMotionStyle: React.CSSProperties = delta !== undefined
+          ? {
+              transform: anim.active ? undefined : `translateY(${delta}px)`,
+              transition: anim.active ? 'transform 0.65s cubic-bezier(0.34, 1.4, 0.64, 1)' : 'none',
+              zIndex: anim.active ? 10 : undefined,
+            }
+          : {}
+
         return (
           <div
             key={entry.user.id}
             className={`relative rounded-2xl overflow-hidden ${
               podium ? podium.ring : isMe ? 'border border-emerald-500/30' : ''
             }`}
-            style={i === 0 ? { animation: 'glow-gold 2.2s ease-in-out infinite' } : undefined}
+            style={{
+              ...(i === 0 ? { animation: 'glow-gold 2.2s ease-in-out infinite' } : {}),
+              ...cardMotionStyle,
+            }}
           >
             {podium && (
               <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-2xl">
