@@ -35,7 +35,9 @@ function mapEvent(event: any): Match {
   const home = comp?.competitors?.find((c: any) => c.homeAway === 'home')
   const away = comp?.competitors?.find((c: any) => c.homeAway === 'away')
   const statusName: string = comp?.status?.type?.name ?? 'STATUS_SCHEDULED'
+  const isLive = statusName === 'STATUS_IN_PROGRESS' || statusName === 'STATUS_HALFTIME'
   const isFinished = statusName === 'STATUS_FINAL' || statusName === 'STATUS_FULL_TIME'
+  const showScore = isLive || isFinished
   const notes: string = event.notes?.[0]?.headline ?? ''
   const round: string = comp?.series?.summary ?? event.season?.type?.name ?? ''
   const groupName: string | null = notes.includes('Group') || notes.includes('Grupo') ? notes : null
@@ -46,8 +48,8 @@ function mapEvent(event: any): Match {
     away_team: away?.team?.displayName ?? 'TBD',
     home_team_crest: home?.team?.logo ?? null,
     away_team_crest: away?.team?.logo ?? null,
-    home_score: isFinished && home?.score !== undefined ? parseInt(home.score) : null,
-    away_score: isFinished && away?.score !== undefined ? parseInt(away.score) : null,
+    home_score: showScore && home?.score !== undefined ? parseInt(home.score) : null,
+    away_score: showScore && away?.score !== undefined ? parseInt(away.score) : null,
     match_date: event.date,
     status: mapStatus(statusName),
     stage: mapStage(notes, round),
