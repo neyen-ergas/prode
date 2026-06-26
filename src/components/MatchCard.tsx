@@ -127,7 +127,9 @@ export default function MatchCard({ match, prediction: initialPred, allPreds, us
               onClick={handleSave}
               disabled={home === '' || away === '' || isPending}
               className={`w-16 shrink-0 py-2 rounded-xl text-sm font-semibold transition ${
-                saved ? 'bg-emerald-600 text-white' : 'bg-gray-700 hover:bg-gray-600 text-white disabled:opacity-40'
+                saved
+                  ? 'bg-emerald-600 text-white animate-[check-pop_0.35s_ease]'
+                  : 'bg-gray-700 hover:bg-gray-600 text-white disabled:opacity-40'
               }`}
             >
               {saved ? '✓' : isPending ? '...' : 'Guardar'}

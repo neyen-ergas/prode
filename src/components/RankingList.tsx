@@ -26,9 +26,15 @@ interface Props {
 
 const FATHERS_DAY_NAMES = new Set(['Juan', 'Juanma', 'Hugo'])
 
+const PODIUM = [
+  { ring: 'ring-1 ring-amber-400/50', medal: '🥇', shimmer: 'rgba(251,191,36,0.22)', delay: '0s' },
+  { ring: 'ring-1 ring-slate-300/30', medal: '🥈', shimmer: 'rgba(203,213,225,0.16)', delay: '0.9s' },
+  { ring: 'ring-1 ring-orange-600/40', medal: '🥉', shimmer: 'rgba(234,88,12,0.16)', delay: '1.8s' },
+]
+
 export default function RankingList({ ranking, currentUserId, userPredMap, matches, isFathersDay = false }: Props) {
   const [expanded, setExpanded] = useState<string | null>(null)
-  const medals = ['🥇', '🥈', '🥉']
+  const leaderPoints = ranking[0]?.total_points ?? 0
 
   const matchMap = new Map(matches.map((m) => [m.id, m]))
   const finishedMatches = matches.filter((m) => m.status === 'FINISHED')
@@ -43,12 +49,28 @@ export default function RankingList({ ranking, currentUserId, userPredMap, match
         const isMe = entry.user.id === currentUserId
         const isExpanded = expanded === entry.user.id
         const preds = userPredMap[entry.user.id] ?? {}
+        const podium = i < 3 ? PODIUM[i] : null
+        const gap = leaderPoints - entry.total_points
 
         return (
           <div
             key={entry.user.id}
-            className={`rounded-2xl overflow-hidden ${isMe ? 'border border-emerald-500/30' : ''}`}
+            className={`relative rounded-2xl overflow-hidden ${
+              podium ? podium.ring : isMe ? 'border border-emerald-500/30' : ''
+            }`}
+            style={i === 0 ? { animation: 'glow-gold 2.2s ease-in-out infinite' } : undefined}
           >
+            {podium && (
+              <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-2xl">
+                <div
+                  className="absolute inset-y-0 w-1/2 animate-[shimmer_2.8s_ease-in-out_infinite]"
+                  style={{
+                    background: `linear-gradient(90deg, transparent, ${podium.shimmer}, transparent)`,
+                    animationDelay: podium.delay,
+                  }}
+                />
+              </div>
+            )}
             {/* Row principal */}
             <button
               onClick={() => toggleUser(entry.user.id)}
@@ -56,8 +78,11 @@ export default function RankingList({ ranking, currentUserId, userPredMap, match
                 isMe ? 'bg-emerald-500/10' : 'bg-gray-900 hover:bg-gray-800'
               }`}
             >
-              <div className="w-7 text-center text-xl shrink-0">
-                {i < 3 ? medals[i] : <span className="text-gray-500 text-sm font-bold">{i + 1}</span>}
+              <div className="w-7 text-center shrink-0">
+                {podium
+                  ? <span className={`text-xl ${i === 0 ? 'text-2xl' : ''}`}>{podium.medal}</span>
+                  : <span className="text-gray-500 text-sm font-bold">{i + 1}</span>
+                }
               </div>
 
               <Avatar name={entry.user.name} color={entry.user.color} emoji={entry.user.emoji} size="lg" />
@@ -81,6 +106,12 @@ export default function RankingList({ ranking, currentUserId, userPredMap, match
                 <div>
                   <div className="text-2xl font-bold text-white">{entry.total_points}</div>
                   <div className="text-xs text-gray-500">pts</div>
+                  {i === 0 && leaderPoints > 0 && (
+                    <div className="text-xs text-amber-400 font-medium">líder</div>
+                  )}
+                  {i > 0 && gap > 0 && (
+                    <div className="text-xs text-red-400/70 font-medium tabular-nums">-{gap}</div>
+                  )}
                 </div>
                 <span className={`text-gray-500 text-xs transition-transform ${isExpanded ? 'rotate-180' : ''}`}>▼</span>
               </div>

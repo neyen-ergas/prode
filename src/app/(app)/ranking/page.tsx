@@ -3,6 +3,7 @@ import { getSession } from '@/lib/auth'
 import type { User, Match } from '@/lib/types'
 import { POINTS } from '@/lib/scoring'
 import RankingList from '@/components/RankingList'
+import MoneyRain from '@/components/MoneyRain'
 export const dynamic = 'force-dynamic'
 type PredRow = { user_id: string; match_id: string; home_score: number; away_score: number; points: number | null }
 export default async function RankingPage() {
@@ -43,7 +44,8 @@ export default async function RankingPage() {
   const familyHasFathers = ranking.some((r) => FATHERS_DAY_NAMES.has(r.user.name))
   const isFathersDay = todayAR === '2026-06-21' && familyHasFathers
   return (
-    <div className="p-4 space-y-4">
+    <div className="p-4 space-y-4 relative">
+      <MoneyRain />
       {isFathersDay && (
         <div className="rounded-2xl bg-gradient-to-r from-emerald-500/15 to-yellow-500/15 border border-emerald-500/30 p-4 text-center">
           <p className="text-white font-semibold text-sm">
@@ -51,6 +53,28 @@ export default async function RankingPage() {
           </p>
         </div>
       )}
+      {/* Premio */}
+      <div className="relative rounded-2xl overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-amber-900/50 via-yellow-900/25 to-amber-900/50" />
+        <div className="absolute inset-0 ring-1 ring-amber-400/35 rounded-2xl" />
+        <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-2xl">
+          <div
+            className="absolute inset-y-0 w-1/2 animate-[shimmer_3s_ease-in-out_infinite]"
+            style={{ background: 'linear-gradient(90deg, transparent, rgba(251,191,36,0.18), transparent)' }}
+          />
+        </div>
+        <div className="relative p-4 flex items-center gap-4">
+          <div className="text-4xl">🏆</div>
+          <div className="flex-1">
+            <div className="text-xs text-amber-400/75 font-semibold uppercase tracking-widest">Premio</div>
+            <div className="text-3xl font-bold text-amber-300 tabular-nums">$240.000</div>
+          </div>
+          <div className="text-xs text-amber-400/50 text-right leading-relaxed">
+            al<br />ganador
+          </div>
+        </div>
+      </div>
+
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-white">Ranking</h1>
         {!hasStarted && (

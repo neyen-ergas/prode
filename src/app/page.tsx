@@ -82,10 +82,16 @@ export default function LoginPage() {
   const canSubmit = pin.length === 4 && (!isCreating || confirmPin.length === 4)
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center p-6">
+    <main
+      className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden"
+      style={{ background: 'radial-gradient(ellipse 90% 55% at 50% 0%, #064e3b 0%, #030712 65%)' }}
+    >
       <div className="w-full max-w-sm space-y-8">
         <div className="text-center space-y-2">
-          <div className="text-6xl">⚽</div>
+          <div className="relative inline-flex items-center justify-center mb-2">
+            <div className="absolute w-20 h-20 bg-emerald-500/20 rounded-full blur-2xl" />
+            <div className="text-7xl relative animate-[float_3s_ease-in-out_infinite]">⚽</div>
+          </div>
           <h1 className="text-3xl font-bold text-white">Prode 2026</h1>
           <p className="text-gray-400 text-sm">¿Quién sos?</p>
         </div>
