@@ -3,7 +3,6 @@ import { getSession } from '@/lib/auth'
 import type { User, Match } from '@/lib/types'
 import { POINTS } from '@/lib/scoring'
 import RankingList from '@/components/RankingList'
-import MoneyRain from '@/components/MoneyRain'
 export const dynamic = 'force-dynamic'
 type PredRow = { user_id: string; match_id: string; home_score: number; away_score: number; points: number | null }
 export default async function RankingPage() {
@@ -41,12 +40,33 @@ export default async function RankingPage() {
   const hasStarted = (anyFinished?.length ?? 0) > 0
   return (
     <div className="p-4 space-y-4 relative">
-      <MoneyRain />
       {/* Premio */}
       <div className="relative rounded-2xl overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-amber-900/50 via-yellow-900/25 to-amber-900/50" />
         <div className="absolute inset-0 ring-1 ring-amber-400/35 rounded-2xl" />
-        <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-2xl">
+        {/* Lluvia de plata contenida en el card */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-2xl" aria-hidden>
+          {[
+            { emoji: '💵', left: '5%',  delay: '0s',   dur: '4s' },
+            { emoji: '🪙', left: '15%', delay: '1.8s', dur: '3.5s' },
+            { emoji: '💵', left: '27%', delay: '0.5s', dur: '4.5s' },
+            { emoji: '🪙', left: '38%', delay: '2.9s', dur: '3.8s' },
+            { emoji: '💵', left: '50%', delay: '1.1s', dur: '4.2s' },
+            { emoji: '🪙', left: '62%', delay: '0.3s', dur: '3.6s' },
+            { emoji: '💵', left: '73%', delay: '2.2s', dur: '4.8s' },
+            { emoji: '🪙', left: '85%', delay: '1.5s', dur: '3.9s' },
+            { emoji: '💵', left: '93%', delay: '3.4s', dur: '4.1s' },
+          ].map((item, i) => (
+            <span
+              key={i}
+              className="absolute top-0 text-base"
+              style={{
+                left: item.left,
+                opacity: 0.35,
+                animation: `money-fall ${item.dur} linear ${item.delay} infinite`,
+              }}
+            >{item.emoji}</span>
+          ))}
           <div
             className="absolute inset-y-0 w-1/2 animate-[shimmer_3s_ease-in-out_infinite]"
             style={{ background: 'linear-gradient(90deg, transparent, rgba(251,191,36,0.18), transparent)' }}
