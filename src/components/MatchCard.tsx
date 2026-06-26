@@ -17,12 +17,11 @@ interface Props {
   users: User[]
   currentUserId: string
   onSaved: (matchId: string, home: number, away: number) => void
-  language?: string
 }
 
 const SPARKLE_POSITIONS = ['8%', '24%', '44%', '64%', '82%']
 
-export default function MatchCard({ match, prediction: initialPred, allPreds, users, currentUserId, onSaved, language = 'en' }: Props) {
+export default function MatchCard({ match, prediction: initialPred, allPreds, users, currentUserId, onSaved }: Props) {
   const locked = isMatchLocked(match.match_date, match.status)
   const [home, setHome] = useState(initialPred?.home_score?.toString() ?? '')
   const [away, setAway] = useState(initialPred?.away_score?.toString() ?? '')
@@ -35,8 +34,8 @@ export default function MatchCard({ match, prediction: initialPred, allPreds, us
   const isExact = hasResult && initialPred?.points === POINTS.EXACT_SCORE
   const homeFlagUrl = getFlagUrl(match.home_team)
   const awayFlagUrl = getFlagUrl(match.away_team)
-  const homeName = getTeamName(match.home_team, language)
-  const awayName = getTeamName(match.away_team, language)
+  const homeName = getTeamName(match.home_team)
+  const awayName = getTeamName(match.away_team)
 
   function handleSave() {
     if (locked || home === '' || away === '') return

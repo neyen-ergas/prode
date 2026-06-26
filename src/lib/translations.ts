@@ -80,8 +80,7 @@ const PLACEHOLDER_ES: Array<[RegExp, string]> = [
   [/^Third Place (.+)$/,            'Tercero $1'],
 ]
 
-export function getTeamName(name: string, language: string): string {
-  if (language !== 'es') return name
+export function getTeamName(name: string): string {
   if (TEAM_ES[name]) return TEAM_ES[name]
   for (const [re, tpl] of PLACEHOLDER_ES) {
     if (re.test(name)) return name.replace(re, tpl)

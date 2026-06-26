@@ -15,10 +15,9 @@ interface Props {
   allPredMap: Record<string, Record<string, PredEntry>>
   users: User[]
   currentUserId: string
-  language?: string
 }
 
-export default function PredictionsTabs({ grouped, predMap: initialPredMap, allPredMap, users, currentUserId, language = 'en' }: Props) {
+export default function PredictionsTabs({ grouped, predMap: initialPredMap, allPredMap, users, currentUserId }: Props) {
   const [savedPreds, setSavedPreds] = useState<Record<string, { home: number; away: number }>>({})
   const [pastTabsOpen, setPastTabsOpen] = useState(false)
 
@@ -148,7 +147,6 @@ export default function PredictionsTabs({ grouped, predMap: initialPredMap, allP
             users={users}
             currentUserId={currentUserId}
             onSaved={handleSaved}
-            language={language}
           />
         ))}
       </div>
