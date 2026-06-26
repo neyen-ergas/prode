@@ -68,12 +68,6 @@ export default function MatchCard({ match, prediction: initialPred, allPreds, us
 
   const allPredsArr = Object.values(allPreds)
   const predCount = allPredsArr.length
-  const homeWins = allPredsArr.filter((p) => p.home_score > p.away_score).length
-  const draws = allPredsArr.filter((p) => p.home_score === p.away_score).length
-  const awayWins = allPredsArr.filter((p) => p.home_score < p.away_score).length
-  const homeWinPct = predCount > 0 ? Math.round((homeWins / predCount) * 100) : 0
-  const drawPct = predCount > 0 ? Math.round((draws / predCount) * 100) : 0
-  const awayWinPct = predCount > 0 ? 100 - homeWinPct - drawPct : 0
 
   const cardRing = hasResult && initialPred
     ? initialPred.points === POINTS.EXACT_SCORE
@@ -171,22 +165,6 @@ export default function MatchCard({ match, prediction: initialPred, allPreds, us
         )}
 
         {error && <p className="text-red-400 text-xs text-center">{error}</p>}
-
-        {/* Barra de consenso */}
-        {locked && predCount > 0 && (
-          <div className="space-y-1 pt-1">
-            <div className="flex gap-0.5 h-1.5 rounded-full overflow-hidden">
-              <div className="bg-emerald-600 transition-all" style={{ width: `${homeWinPct}%` }} />
-              <div className="bg-gray-600" style={{ width: `${drawPct}%` }} />
-              <div className="bg-blue-600 transition-all" style={{ width: `${awayWinPct}%` }} />
-            </div>
-            <div className="flex justify-between text-xs text-gray-500">
-              <span>{homeWinPct}% local</span>
-              {drawPct > 0 && <span>{drawPct}% empate</span>}
-              <span>{awayWinPct}% visit.</span>
-            </div>
-          </div>
-        )}
 
         {/* Toggle ver pronósticos */}
         <button
