@@ -111,7 +111,13 @@ export default function MatchCard({ match, prediction: initialPred, allPreds, us
         {/* Equipos + marcador/inputs en el mismo row */}
         <div className="flex items-center gap-2">
           <div className="flex-1 text-center">
-            {homeFlagUrl && <img src={homeFlagUrl} alt="" className="w-9 h-6 object-cover mx-auto mb-1 rounded-sm" />}
+            {homeFlagUrl && (
+              <img
+                src={homeFlagUrl} alt=""
+                className={`w-9 h-6 object-cover mx-auto mb-1 rounded-sm ${match.home_team === 'Japan' ? 'cursor-pointer' : ''}`}
+                onClick={match.home_team === 'Japan' ? () => new Audio('/irasshaimase.mp3').play() : undefined}
+              />
+            )}
             <div className="text-xs font-semibold text-white leading-tight">{homeName}</div>
           </div>
 
@@ -148,7 +154,13 @@ export default function MatchCard({ match, prediction: initialPred, allPreds, us
           </div>
 
           <div className="flex-1 text-center">
-            {awayFlagUrl && <img src={awayFlagUrl} alt="" className="w-9 h-6 object-cover mx-auto mb-1 rounded-sm" />}
+            {awayFlagUrl && (
+              <img
+                src={awayFlagUrl} alt=""
+                className={`w-9 h-6 object-cover mx-auto mb-1 rounded-sm ${match.away_team === 'Japan' ? 'cursor-pointer' : ''}`}
+                onClick={match.away_team === 'Japan' ? () => new Audio('/irasshaimase.mp3').play() : undefined}
+              />
+            )}
             <div className="text-xs font-semibold text-white leading-tight">{awayName}</div>
           </div>
         </div>
