@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import type { User } from '@/lib/types'
 import Avatar from './Avatar'
 import EmojiPicker from './EmojiPicker'
+import SplashScreen from './SplashScreen'
 
 interface Props {
   user: User
@@ -40,6 +41,7 @@ export default function AppShell({ user, children }: Props) {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <SplashScreen name={user.name} />
       <header className="sticky top-0 z-10 bg-gray-950/90 backdrop-blur border-b border-gray-800 px-4 py-3 flex items-center justify-between">
         <button
           onClick={() => setShowPicker(true)}
