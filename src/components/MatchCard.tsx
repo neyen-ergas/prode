@@ -123,7 +123,11 @@ export default function MatchCard({ match, prediction: initialPred, allPreds, us
                 <span className="text-3xl font-bold text-white tabular-nums">{match.away_score}</span>
               </div>
             ) : locked ? (
-              <span className="text-gray-600 text-xs px-2">🔒</span>
+              <div className="flex items-center gap-2 px-1">
+                <span className="text-3xl font-bold text-gray-500 tabular-nums">{home !== '' ? home : '–'}</span>
+                <span className="text-gray-700 text-xl">—</span>
+                <span className="text-3xl font-bold text-gray-500 tabular-nums">{away !== '' ? away : '–'}</span>
+              </div>
             ) : (
               <div className="flex items-center gap-2">
                 <input

@@ -34,12 +34,12 @@ export default function PredictionsTabs({ grouped, predMap: initialPredMap, allP
 
   const pendingMatches = grouped.flatMap((g) => g.matches).filter(isPending)
 
-  // Un grupo es "pasado" si todos sus partidos están bloqueados
+  // Un grupo es "pasado" solo si todos sus partidos terminaron
   const pastGroups = grouped.filter((g) =>
-    g.matches.every((m) => isMatchLocked(m.match_date, m.status))
+    g.matches.every((m) => m.status === 'FINISHED')
   )
   const upcomingGroups = grouped.filter((g) =>
-    g.matches.some((m) => !isMatchLocked(m.match_date, m.status))
+    g.matches.some((m) => m.status !== 'FINISHED')
   )
 
   const initialTab = (): string => {
