@@ -63,15 +63,10 @@ export default async function RankingPage() {
             style={{ background: 'linear-gradient(90deg, transparent, rgba(251,191,36,0.18), transparent)' }}
           />
         </div>
-        <div className="relative p-4 flex items-center gap-4">
+        <div className="relative p-5 flex flex-col items-center gap-1">
           <div className="text-4xl">🏆</div>
-          <div className="flex-1">
-            <div className="text-xs text-amber-400/75 font-semibold uppercase tracking-widest">Premio</div>
-            <div className="text-3xl font-bold text-amber-300 tabular-nums">$240.000</div>
-          </div>
-          <div className="text-xs text-amber-400/50 text-right leading-relaxed">
-            al<br />ganador
-          </div>
+          <div className="text-xs text-amber-400/75 font-semibold uppercase tracking-widest">Premio</div>
+          <div className="text-3xl font-bold text-amber-300 tabular-nums">$240.000</div>
         </div>
       </div>
 
