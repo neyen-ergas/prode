@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import type { Match, Prediction, User } from '@/lib/types'
 import { formatMatchDate, isMatchLocked } from '@/lib/utils'
 import Avatar from './Avatar'
+import JapanRain from './JapanRain'
 import { POINTS } from '@/lib/scoring'
 import { getFlagUrl } from '@/lib/flags'
 import { getTeamName } from '@/lib/translations'
@@ -32,10 +33,23 @@ export default function MatchCard({ match, prediction: initialPred, allPreds, us
 
   const hasResult = match.status === 'FINISHED' && match.home_score !== null
   const isExact = hasResult && initialPred?.points === POINTS.EXACT_SCORE
+  const japanIsHome = match.home_team === 'Japan'
+  const japanIsAway = match.away_team === 'Japan'
+  const japanLost = hasResult && (
+    (japanIsHome && match.home_score! < match.away_score!) ||
+    (japanIsAway && match.away_score! < match.home_score!)
+  )
   const homeFlagUrl = getFlagUrl(match.home_team)
   const awayFlagUrl = getFlagUrl(match.away_team)
   const homeName = getTeamName(match.home_team)
   const awayName = getTeamName(match.away_team)
+
+  function playJapanSound() {
+    const a = new Audio('/irasshaimase.mp3')
+    a.volume = japanLost ? 0.15 : 0.20
+    if (japanLost) a.playbackRate = 0.6
+    a.play()
+  }
 
   function handleSave() {
     if (locked || home === '' || away === '') return
@@ -78,6 +92,8 @@ export default function MatchCard({ match, prediction: initialPred, allPreds, us
 
   return (
     <div className={`bg-gray-900 rounded-2xl overflow-hidden relative ${cardRing}`}>
+      {japanLost && <JapanRain />}
+
       {/* Sparkles para resultado exacto */}
       {isExact && (
         <div className="absolute inset-0 pointer-events-none" aria-hidden>
@@ -113,11 +129,15 @@ export default function MatchCard({ match, prediction: initialPred, allPreds, us
             {homeFlagUrl && (
               <img
                 src={homeFlagUrl} alt=""
-                className={`w-9 h-6 object-cover mx-auto mb-1 rounded-sm ${match.home_team === 'Japan' ? 'cursor-pointer' : ''}`}
-                onClick={match.home_team === 'Japan' ? () => { const a = new Audio('/irasshaimase.mp3'); a.volume = 0.20; a.play() } : undefined}
+                className={`w-9 h-6 object-cover mx-auto mb-1 rounded-sm ${japanIsHome ? 'cursor-pointer' : ''}`}
+                style={japanLost && japanIsHome ? { filter: 'grayscale(1)' } : undefined}
+                onClick={japanIsHome ? playJapanSound : undefined}
               />
             )}
             <div className="text-xs font-semibold text-white leading-tight">{homeName}</div>
+            {japanLost && japanIsHome && (
+              <div className="text-xs text-blue-300/50 animate-[sayonara-in_0.6s_ease_0.3s_both]">さようなら</div>
+            )}
           </div>
 
           <div className="shrink-0">
@@ -156,11 +176,15 @@ export default function MatchCard({ match, prediction: initialPred, allPreds, us
             {awayFlagUrl && (
               <img
                 src={awayFlagUrl} alt=""
-                className={`w-9 h-6 object-cover mx-auto mb-1 rounded-sm ${match.away_team === 'Japan' ? 'cursor-pointer' : ''}`}
-                onClick={match.away_team === 'Japan' ? () => { const a = new Audio('/irasshaimase.mp3'); a.volume = 0.20; a.play() } : undefined}
+                className={`w-9 h-6 object-cover mx-auto mb-1 rounded-sm ${japanIsAway ? 'cursor-pointer' : ''}`}
+                style={japanLost && japanIsAway ? { filter: 'grayscale(1)' } : undefined}
+                onClick={japanIsAway ? playJapanSound : undefined}
               />
             )}
             <div className="text-xs font-semibold text-white leading-tight">{awayName}</div>
+            {japanLost && japanIsAway && (
+              <div className="text-xs text-blue-300/50 animate-[sayonara-in_0.6s_ease_0.3s_both]">さようなら</div>
+            )}
           </div>
         </div>
 

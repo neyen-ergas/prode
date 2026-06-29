@@ -26,7 +26,7 @@ export default function SplashScreen({ name }: { name: string }) {
 
   return (
     <div
-      className={`fixed inset-0 z-50 bg-[#030712] transition-opacity duration-300 ${
+      className={`fixed inset-0 z-50 bg-[#04020e] transition-opacity duration-300 ${
         fading ? 'opacity-0' : 'opacity-100'
       }`}
     >

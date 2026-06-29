@@ -2,6 +2,16 @@ import type { Match, MatchStatus, Stage } from './types'
 
 const ESPN_BASE = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world'
 
+// Count goals for a team in the first 90 minutes only (clock.value <= 5400s).
+// Own goals: team.id is the player's team (defender), goal counts for the opponent.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function regulationGoals(details: any[], teamId: string, opponentId: string): number {
+  return details.filter(d => {
+    if (!d.scoringPlay || d.shootout || d.clock?.value > 5400) return false
+    return d.ownGoal ? d.team?.id === opponentId : d.team?.id === teamId
+  }).length
+}
+
 // World Cup 2026: June 11 – July 19
 const WC_DATE_RANGE = '20260611-20260719'
 
@@ -40,14 +50,30 @@ function mapEvent(event: any): Match {
   const round: string = comp?.series?.summary ?? event.season?.type?.name ?? ''
   const groupName: string | null = notes.includes('Group') || notes.includes('Grupo') ? notes : null
 
+  // Use regulation-only (90 min) score. If extra time was played (period > 2),
+  // recalculate from goal events with clock.value <= 5400s.
+  const period: number = comp?.status?.period ?? 2
+  const details: any[] = comp?.details ?? []
+  const hadExtraTime = isFinished && period > 2
+  const homeId: string = home?.team?.id ?? ''
+  const awayId: string = away?.team?.id ?? ''
+
+  const homeScore = !isFinished ? null
+    : hadExtraTime ? regulationGoals(details, homeId, awayId)
+    : home?.score !== undefined ? parseInt(home.score) : null
+
+  const awayScore = !isFinished ? null
+    : hadExtraTime ? regulationGoals(details, awayId, homeId)
+    : away?.score !== undefined ? parseInt(away.score) : null
+
   return {
     id: String(event.id),
     home_team: home?.team?.displayName ?? 'TBD',
     away_team: away?.team?.displayName ?? 'TBD',
     home_team_crest: home?.team?.logo ?? null,
     away_team_crest: away?.team?.logo ?? null,
-    home_score: isFinished && home?.score !== undefined ? parseInt(home.score) : null,
-    away_score: isFinished && away?.score !== undefined ? parseInt(away.score) : null,
+    home_score: homeScore,
+    away_score: awayScore,
     match_date: event.date,
     status: mapStatus(statusName),
     stage: mapStage(notes, round),
