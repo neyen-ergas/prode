@@ -17,10 +17,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   if (!user) redirect('/')
 
-  return (
-    <>
-      {session.familyGroup === 'ergas' && <BackgroundMusic />}
-      <AppShell user={user}>{children}</AppShell>
-    </>
-  )
+  if (session.familyGroup === 'ergas') {
+    return (
+      <BackgroundMusic>
+        <AppShell user={user}>{children}</AppShell>
+      </BackgroundMusic>
+    )
+  }
+
+  return <AppShell user={user}>{children}</AppShell>
 }

@@ -1,8 +1,9 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { MusicContext } from '@/contexts/MusicContext'
 
-export default function BackgroundMusic() {
+export default function BackgroundMusic({ children }: { children: React.ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const [muted, setMuted] = useState(false)
 
@@ -35,12 +36,8 @@ export default function BackgroundMusic() {
   }
 
   return (
-    <button
-      onClick={toggleMute}
-      title={muted ? 'Activar música' : 'Silenciar música'}
-      className="fixed bottom-5 right-4 z-50 w-9 h-9 rounded-full bg-gray-800/70 backdrop-blur-sm border border-gray-700/50 flex items-center justify-center text-base transition hover:bg-gray-700/80 active:scale-95"
-    >
-      {muted ? '🔇' : '🎵'}
-    </button>
+    <MusicContext.Provider value={{ active: true, muted, toggleMute }}>
+      {children}
+    </MusicContext.Provider>
   )
 }
