@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/auth'
 import { createAdminClient } from '@/lib/supabase/server'
 import AppShell from '@/components/AppShell'
+import BackgroundMusic from '@/components/BackgroundMusic'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession()
@@ -16,5 +17,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   if (!user) redirect('/')
 
-  return <AppShell user={user}>{children}</AppShell>
+  return (
+    <>
+      {session.familyGroup === 'ergas' && <BackgroundMusic />}
+      <AppShell user={user}>{children}</AppShell>
+    </>
+  )
 }
