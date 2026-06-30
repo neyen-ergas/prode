@@ -27,7 +27,7 @@ async function runSync() {
 
     if (predictions?.length) {
       const scoreMap = new Map(finishedMatches.map((m) => [m.id, m]))
-      const updates = predictions.map((pred) => {
+      const updates = predictions.map((pred: { id: string; match_id: string; home_score: number; away_score: number }) => {
         const match = scoreMap.get(pred.match_id)!
         const points = calculatePoints(pred.home_score, pred.away_score, match.home_score!, match.away_score!)
         return { id: pred.id, points }
