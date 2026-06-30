@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import MatchCard from './MatchCard'
-import MusicButton from './MusicButton'
 import type { Match, Prediction, User } from '@/lib/types'
 import { isMatchLocked } from '@/lib/utils'
 
@@ -49,10 +48,6 @@ export default function PredictionsTabs({ grouped, predMap: initialPredMap, allP
 
   const [active, setActive] = useState<string>(initialTab)
 
-  const todayKey = new Date().toLocaleDateString('es-AR', {
-    timeZone: 'America/Argentina/Buenos_Aires',
-    year: 'numeric', month: '2-digit', day: '2-digit',
-  })
 
   function handleSaved(matchId: string, home: number, away: number) {
     setSavedPreds((prev) => ({ ...prev, [matchId]: { home, away } }))
@@ -155,7 +150,6 @@ export default function PredictionsTabs({ grouped, predMap: initialPredMap, allP
             onSaved={handleSaved}
           />
         ))}
-        {active === todayKey && <MusicButton />}
       </div>
     </div>
   )
