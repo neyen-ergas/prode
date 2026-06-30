@@ -23,6 +23,7 @@ function mapStatus(s: string): MatchStatus {
     STATUS_HALFTIME: 'PAUSED',
     STATUS_FINAL: 'FINISHED',
     STATUS_FULL_TIME: 'FINISHED',
+    STATUS_FINAL_PEN: 'FINISHED',
     STATUS_POSTPONED: 'POSTPONED',
     STATUS_CANCELED: 'CANCELLED',
   }
@@ -45,7 +46,7 @@ function mapEvent(event: any): Match {
   const home = comp?.competitors?.find((c: any) => c.homeAway === 'home')
   const away = comp?.competitors?.find((c: any) => c.homeAway === 'away')
   const statusName: string = comp?.status?.type?.name ?? 'STATUS_SCHEDULED'
-  const isFinished = statusName === 'STATUS_FINAL' || statusName === 'STATUS_FULL_TIME'
+  const isFinished = statusName === 'STATUS_FINAL' || statusName === 'STATUS_FULL_TIME' || statusName === 'STATUS_FINAL_PEN'
   const notes: string = event.notes?.[0]?.headline ?? ''
   const round: string = comp?.series?.summary ?? event.season?.type?.name ?? ''
   const groupName: string | null = notes.includes('Group') || notes.includes('Grupo') ? notes : null
