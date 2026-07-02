@@ -2,6 +2,7 @@ export type MatchStatus = 'SCHEDULED' | 'LIVE' | 'IN_PLAY' | 'PAUSED' | 'FINISHE
 
 export type Stage =
   | 'GROUP_STAGE'
+  | 'ROUND_OF_32'
   | 'LAST_16'
   | 'QUARTER_FINALS'
   | 'SEMI_FINALS'

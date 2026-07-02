@@ -8,6 +8,7 @@ export function cn(...inputs: ClassValue[]) {
 
 export const STAGE_LABELS: Record<Stage, string> = {
   GROUP_STAGE: 'Fase de Grupos',
+  ROUND_OF_32: 'Dieciseisavos de Final',
   LAST_16: 'Octavos de Final',
   QUARTER_FINALS: 'Cuartos de Final',
   SEMI_FINALS: 'Semifinales',
@@ -17,6 +18,7 @@ export const STAGE_LABELS: Record<Stage, string> = {
 
 export const STAGE_ORDER: Stage[] = [
   'GROUP_STAGE',
+  'ROUND_OF_32',
   'LAST_16',
   'QUARTER_FINALS',
   'SEMI_FINALS',

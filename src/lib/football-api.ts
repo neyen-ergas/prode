@@ -15,29 +15,38 @@ function regulationGoals(details: any[], teamId: string, opponentId: string): nu
 // World Cup 2026: June 11 – July 19
 const WC_DATE_RANGE = '20260611-20260719'
 
-function mapStatus(s: string): MatchStatus {
+// ESPN's `type.completed` flag is authoritative for "match over" regardless of
+// how it ended (full time, AET, penalties) — safer than enumerating every
+// STATUS_FINAL_* variant, which missed STATUS_FINAL_AET (see Belgium-Senegal R32).
+function mapStatus(s: string, completed: boolean): MatchStatus {
+  if (completed) return 'FINISHED'
   const map: Record<string, MatchStatus> = {
     STATUS_SCHEDULED: 'SCHEDULED',
     STATUS_TIMED: 'SCHEDULED',
     STATUS_IN_PROGRESS: 'IN_PLAY',
     STATUS_HALFTIME: 'PAUSED',
-    STATUS_FINAL: 'FINISHED',
-    STATUS_FULL_TIME: 'FINISHED',
-    STATUS_FINAL_PEN: 'FINISHED',
     STATUS_POSTPONED: 'POSTPONED',
     STATUS_CANCELED: 'CANCELLED',
   }
   return map[s] ?? 'SCHEDULED'
 }
 
-function mapStage(notes: string, round: string): Stage {
-  const text = (notes + ' ' + round).toUpperCase()
-  if (text.includes('FINAL') && !text.includes('SEMI') && !text.includes('QUARTER') && !text.includes('THIRD')) return 'FINAL'
-  if (text.includes('THIRD')) return 'THIRD_PLACE'
-  if (text.includes('SEMI')) return 'SEMI_FINALS'
-  if (text.includes('QUARTER')) return 'QUARTER_FINALS'
-  if (text.includes('ROUND OF 16') || text.includes('LAST 16') || text.includes('ROUND OF SIXTEEN') || text.includes('OCTAVOS')) return 'LAST_16'
-  return 'GROUP_STAGE'
+// event.season.slug is ESPN's own structured stage identifier — reliable
+// regardless of locale/wording, unlike the free-text notes/series.summary
+// this used to parse (which was empty for round-of-32 and silently fell
+// back to GROUP_STAGE, e.g. Belgium-Senegal).
+const SLUG_TO_STAGE: Record<string, Stage> = {
+  'group-stage': 'GROUP_STAGE',
+  'round-of-32': 'ROUND_OF_32',
+  'round-of-16': 'LAST_16',
+  'quarterfinals': 'QUARTER_FINALS',
+  'semifinals': 'SEMI_FINALS',
+  '3rd-place-match': 'THIRD_PLACE',
+  'final': 'FINAL',
+}
+
+function mapStage(slug: string | undefined): Stage {
+  return SLUG_TO_STAGE[slug ?? ''] ?? 'GROUP_STAGE'
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -46,9 +55,8 @@ function mapEvent(event: any): Match {
   const home = comp?.competitors?.find((c: any) => c.homeAway === 'home')
   const away = comp?.competitors?.find((c: any) => c.homeAway === 'away')
   const statusName: string = comp?.status?.type?.name ?? 'STATUS_SCHEDULED'
-  const isFinished = statusName === 'STATUS_FINAL' || statusName === 'STATUS_FULL_TIME' || statusName === 'STATUS_FINAL_PEN'
+  const isFinished = comp?.status?.type?.completed === true
   const notes: string = event.notes?.[0]?.headline ?? ''
-  const round: string = comp?.series?.summary ?? event.season?.type?.name ?? ''
   const groupName: string | null = notes.includes('Group') || notes.includes('Grupo') ? notes : null
 
   // Use regulation-only (90 min) score. If extra time was played (period > 2),
@@ -76,8 +84,8 @@ function mapEvent(event: any): Match {
     home_score: homeScore,
     away_score: awayScore,
     match_date: event.date,
-    status: mapStatus(statusName),
-    stage: mapStage(notes, round),
+    status: mapStatus(statusName, isFinished),
+    stage: mapStage(event.season?.slug),
     group_name: groupName,
     matchday: event.week?.number ?? null,
   }
