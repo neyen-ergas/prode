@@ -35,6 +35,7 @@ const PODIUM = [
 export default function RankingList({ ranking, currentUserId, userPredMap, matches }: Props) {
   const [expanded, setExpanded] = useState<string | null>(null)
   const [anim, setAnim] = useState<{ deltas: Record<string, number>; active: boolean }>({ deltas: {}, active: false })
+  const [movement, setMovement] = useState<Record<string, number>>({})
   const leaderPoints = ranking[0]?.total_points ?? 0
 
   useEffect(() => {
@@ -48,14 +49,18 @@ export default function RankingList({ ranking, currentUserId, userPredMap, match
         prevOrder.forEach((id, i) => { prevPos[id] = i })
 
         const deltas: Record<string, number> = {}
+        const moves: Record<string, number> = {}
         let hasMove = false
         currentOrder.forEach((id, newIdx) => {
           const oldIdx = prevPos[id]
           if (oldIdx !== undefined && oldIdx !== newIdx) {
             deltas[id] = (oldIdx - newIdx) * CARD_HEIGHT_PX
+            moves[id] = oldIdx - newIdx
             hasMove = true
           }
         })
+
+        setMovement(moves)
 
         if (hasMove) {
           const doAnimate = () => {
@@ -133,11 +138,20 @@ export default function RankingList({ ranking, currentUserId, userPredMap, match
                 isMe ? 'bg-emerald-500/10' : 'bg-gray-900 hover:bg-gray-800'
               }`}
             >
-              <div className="w-7 text-center shrink-0">
+              <div className="w-7 flex flex-col items-center justify-center shrink-0">
                 {podium
                   ? <span className={`text-xl ${i === 0 ? 'text-2xl' : ''}`}>{podium.medal}</span>
                   : <span className="text-gray-500 text-sm font-bold">{i + 1}</span>
                 }
+                {!!movement[entry.user.id] && (
+                  <span
+                    className={`text-[9px] font-bold leading-none mt-0.5 tabular-nums ${
+                      movement[entry.user.id] > 0 ? 'text-emerald-400' : 'text-red-400'
+                    }`}
+                  >
+                    {movement[entry.user.id] > 0 ? '▲' : '▼'}{Math.abs(movement[entry.user.id])}
+                  </span>
+                )}
               </div>
 
               <Avatar name={entry.user.name} color={entry.user.color} emoji={entry.user.emoji} size="lg" />
