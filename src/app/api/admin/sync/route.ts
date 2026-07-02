@@ -17,20 +17,40 @@ async function runSync() {
     (m) => m.status === 'FINISHED' && m.home_score !== null && m.away_score !== null
   )
 
-  for (const match of finishedMatches) {
+  let scored = 0
+  if (finishedMatches.length > 0) {
+    const finishedIds = finishedMatches.map((m) => m.id)
     const { data: predictions } = await supabase
       .from('predictions')
-      .select('id, home_score, away_score')
-      .eq('match_id', match.id)
+      .select('id, user_id, match_id, home_score, away_score')
+      .in('match_id', finishedIds)
 
-    if (!predictions?.length) continue
-    for (const pred of predictions) {
-      const points = calculatePoints(pred.home_score, pred.away_score, match.home_score!, match.away_score!)
-      await supabase.from('predictions').update({ points }).eq('id', pred.id)
+    if (predictions?.length) {
+      const scoreMap = new Map(finishedMatches.map((m) => [m.id, m]))
+      const updates = predictions.map(
+        (pred: { id: string; user_id: string; match_id: string; home_score: number; away_score: number }) => {
+          const match = scoreMap.get(pred.match_id)!
+          const points = calculatePoints(pred.home_score, pred.away_score, match.home_score!, match.away_score!)
+          return {
+            id: pred.id,
+            user_id: pred.user_id,
+            match_id: pred.match_id,
+            home_score: pred.home_score,
+            away_score: pred.away_score,
+            points,
+          }
+        }
+      )
+
+      const { error: scoreError } = await supabase
+        .from('predictions')
+        .upsert(updates, { onConflict: 'id' })
+      if (scoreError) throw new Error(scoreError.message)
+      scored = updates.length
     }
   }
 
-  return { ok: true, synced: matches.length, scored: finishedMatches.length }
+  return { ok: true, synced: matches.length, scored }
 }
 
 function isAuthorized(req: NextRequest): boolean {
